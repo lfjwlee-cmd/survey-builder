@@ -30,8 +30,9 @@ a working system they can run with two commands.
 ├── .claude/launch.json     # preview config
 └── public/
     ├── index.html          # the survey form (auto-rendered from questions.json)
-    ├── questions.json       # ← THE ONLY FILE THE USER EDITS to change the survey
-    ├── results.html        # owner dashboard: KPIs, charts, PDF export, QR generator
+    ├── questions.json       # the survey definition (editable as a file, or via editor.html)
+    ├── editor.html         # visual question editor: edit/add/remove/reorder, saves questions.json
+    ├── results.html        # owner dashboard: per-response table, KPIs, charts; export to Excel/PDF/Word; QR generator
     └── import.html         # drop a Google Forms .xlsx/.csv → auto-summary + PDF
 ```
 
@@ -61,6 +62,7 @@ Copy from this skill's `assets/` into the new project:
 - `assets/server.js`      → `<project>/server.js`
 - `assets/launch.json`    → `<project>/.claude/launch.json`
 - `assets/index.html`     → `<project>/public/index.html`
+- `assets/editor.html`    → `<project>/public/editor.html`
 - `assets/results.html`   → `<project>/public/results.html`
 - `assets/import.html`    → `<project>/public/import.html`
 - `assets/questions.json` → `<project>/public/questions.json`  (you will overwrite this next)
@@ -97,9 +99,14 @@ Then:
   On the dashboard, click **📱 설문 QR**, paste that address, generate the QR, print/show it.
   Phones on the **same WiFi** scan it and answer. (For remote events, deploy server.js to a
   free host like Render/Railway and make the QR from that URL.)
-- **See results / PDF**: open `results.html` — it auto-aggregates (launch verdict, KPIs,
-  per-question breakdown, segments, keywords, quotable reviews) and refreshes every 15s.
-  Click **📄 PDF 저장** to download a multi-page PDF (not a print dialog).
+- **See results / export**: open `results.html` — it shows a per-response table first ("who/when/
+  what"), then auto-aggregates (launch verdict, KPIs, per-question breakdown, segments, keywords,
+  quotable reviews) and refreshes every 15s. Export buttons: **📗 엑셀** (formatted report workbook
+  via `/api/report.xlsx`, laid out like the dashboard + a raw-data sheet), **📄 PDF** (multi-page,
+  not a print dialog), **📘 워드** (.doc).
+- **Edit questions visually**: the dashboard's **✏️ 항목편집** opens `editor.html` — change wording,
+  type, options, required, add/remove/reorder questions and sections, then **저장**. It writes
+  `questions.json` and the survey + Excel columns update immediately (no manual file editing).
 - **Google Forms summary**: if they ran the survey on Google Forms instead, open `import.html`
   and drag the exported spreadsheet in — it auto-classifies every column and produces the
   same kind of summary + PDF, fully in the browser (no server needed).

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>설문 항목 편집기</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --primary:#cc785c;--primary-active:#a9583e;--ink:#141413;--muted:#6c6a64;--muted-soft:#8e8b82;
+      --hairline:#e6dfd8;--hairline-soft:#ebe6df;--canvas:#faf9f5;--card:#efe9de;--teal:#5db8a6;
+      --success:#5db872;--error:#c64545;--display:"Cormorant Garamond",Georgia,serif;--body:"Inter",-apple-system,sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--canvas);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;}
+    .topbar{background:var(--canvas);border-bottom:1px solid var(--hairline-soft);display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 20px;flex-wrap:wrap;position:sticky;top:0;z-index:20;}
+    .brand{font-weight:500;display:flex;align-items:center;gap:8px;}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;}
+    .btn{height:38px;padding:8px 16px;border-radius:8px;border:1px solid var(--hairline);background:var(--canvas);color:var(--ink);font-family:var(--body);font-size:13px;font-weight:500;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;}
+    .btn:hover{background:var(--card);}
+    .btn.primary{background:var(--primary);color:#fff;border-color:var(--primary);}
+    .btn.primary:hover{background:var(--primary-active);}
+    .btn.sm{height:30px;padding:4px 10px;font-size:12px;}
+    .btn.danger{color:var(--error);border-color:#e9b8b8;}
+    .wrap{max-width:760px;margin:0 auto;padding:24px 20px 96px;}
+    h1{font-family:var(--display);font-size:32px;font-weight:400;letter-spacing:-0.5px;margin-bottom:4px;}
+    .sub{color:var(--muted);font-size:14px;margin-bottom:20px;}
+    .panel{background:var(--card);border-radius:12px;padding:18px 20px;margin-bottom:16px;}
+    .panel h2{font-size:12px;font-weight:500;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+    .fld{flex:1;min-width:120px;}
+    label.lab{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;}
+    input,select,textarea{width:100%;height:36px;padding:7px 10px;background:var(--canvas);color:var(--ink);border:1px solid var(--hairline);border-radius:8px;font-family:var(--body);font-size:14px;outline:none;}
+    textarea{height:auto;min-height:54px;resize:vertical;}
+    input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(204,120,92,.15);}
+    .q-card{background:var(--canvas);border:1px solid var(--hairline);border-radius:10px;padding:14px;margin-bottom:10px;}
+    .q-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;}
+    .q-head .qnum{font-size:12px;font-weight:500;color:var(--primary);}
+    .q-tools{display:flex;gap:4px;}
+    .sec-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;}
+    .chk{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--ink);height:36px;}
+    .chk input{width:16px;height:16px;accent-color:var(--primary);}
+    .hint{font-size:12px;color:var(--muted-soft);margin-top:4px;}
+    .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 22px;border-radius:10px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:50;}
+    .toast.show{opacity:1;}
+    .toast.err{background:var(--error);}
+    @media(max-width:600px){ h1{font-size:26px;} .wrap{padding:18px 14px 96px;} .fld{min-width:calc(50% - 5px);} }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <span class="brand">✏️ 설문 항목 편집기</span>
+    <div class="actions">
+      <a class="btn" href="/index.html" target="_blank">설문 미리보기 ↗</a>
+      <button class="btn primary" id="saveBtn">💾 저장</button>
+    </div>
+  </div>
+
+  <div class="wrap" id="root"><p class="sub">⏳ 불러오는 중…</p></div>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const TYPES = [
+      ["text","한 줄 입력"],["email","이메일"],["textarea","여러 줄 입력"],
+      ["select","드롭다운 선택"],["segment","버튼 선택"],["rating","1~5 이모지 점수"],
+      ["scale","1~5 강도(부족↔과함)"],["nps","0~10 추천도"],["consent","동의 체크박스"]
+    ];
+    let CFG = null;
+    const $ = s => document.querySelector(s);
+
+    async function load(){
+      try { CFG = await (await fetch('/api/questions')).json(); render(); }
+      catch { $('#root').innerHTML = '<p class="sub">⚠️ 서버에 연결할 수 없습니다. node server.js 로 서버를 켠 뒤 새로고침하세요.</p>'; }
+    }
+
+    function metaField(key, labelTxt, area){
+      const v = (CFG.meta[key]||'').replace(/"/g,'&quot;');
+      if(area) return `<div class="fld" style="flex:1 1 100%"><label class="lab">${labelTxt}</label><textarea data-meta="${key}">${CFG.meta[key]||''}</textarea></div>`;
+      return `<div class="fld"><label class="lab">${labelTxt}</label><input data-meta="${key}" value="${v}" /></div>`;
+    }
+
+    function render(){
+      let h = `<h1>설문 항목 편집</h1><p class="sub">항목을 자유롭게 바꾸고 맨 위 <b>저장</b>을 누르면 설문과 엑셀 구조에 바로 반영됩니다.</p>`;
+
+      // 메타
+      h += `<div class="panel"><h2>설문 기본 정보</h2><div class="row">
+        ${metaField('brand','브랜드명')}${metaField('badge','상단 뱃지')}${metaField('eyebrow','작은 라벨')}
+      </div><div class="row">${metaField('title','제목 (줄바꿈은 &lt;br&gt;)',true)}</div>
+      <div class="row">${metaField('subtitle','부제목',true)}</div>
+      <div class="row">${metaField('metaLine','안내 한 줄')}${metaField('sheetName','엑셀 시트명')}${metaField('submitText','제출 버튼 글자')}</div>
+      <div class="row">${metaField('doneTitle','완료 제목')}</div>
+      <div class="row">${metaField('doneText','완료 메시지',true)}</div></div>`;
+
+      // 섹션 + 문항
+      CFG.sections.forEach((sec, si)=>{
+        h += `<div class="panel" data-sec="${si}">
+          <div class="sec-head">
+            <div class="fld" style="flex:1"><label class="lab">단계 제목</label><input data-sectitle="${si}" value="${(sec.title||'').replace(/"/g,'&quot;')}" /></div>
+            <div class="q-tools" style="align-self:flex-end">
+              <button class="btn sm" onclick="moveSec(${si},-1)">▲</button>
+              <button class="btn sm" onclick="moveSec(${si},1)">▼</button>
+              <button class="btn sm danger" onclick="delSec(${si})">단계삭제</button>
+            </div>
+          </div>`;
+        (sec.questions||[]).forEach((q, qi)=>{
+          h += renderQ(si, qi, q);
+        });
+        h += `<button class="btn sm" onclick="addQ(${si})">＋ 문항 추가</button></div>`;
+      });
+      h += `<button class="btn" onclick="addSec()">＋ 단계(섹션) 추가</button>`;
+      $('#root').innerHTML = h;
+    }
+
+    function renderQ(si, qi, q){
+      const opts = (q.options||[]).join(', ');
+      const ends = (q.ends||[]).join(', ');
+      const needOpts = q.type==='select'||q.type==='segment';
+      const needEnds = q.type==='scale'||q.type==='nps';
+      return `<div class="q-card" data-q="${si}.${qi}">
+        <div class="q-head"><span class="qnum">문항 ${qi+1}</span>
+          <div class="q-tools">
+            <button class="btn sm" onclick="moveQ(${si},${qi},-1)">▲</button>
+            <button class="btn sm" onclick="moveQ(${si},${qi},1)">▼</button>
+            <button class="btn sm danger" onclick="delQ(${si},${qi})">삭제</button>
+          </div>
+        </div>
+        <div class="row">
+          <div class="fld" style="flex:2"><label class="lab">질문 문구 (화면 표시)</label><input data-f="label" value="${(q.label||'').replace(/"/g,'&quot;')}" /></div>
+        </div>
+        <div class="row">
+          <div class="fld"><label class="lab">유형</label><select data-f="type" onchange="onType(${si},${qi},this.value)">
+            ${TYPES.map(([v,t])=>`<option value="${v}" ${q.type===v?'selected':''}>${t}</option>`).join('')}
+          </select></div>
+          <div class="fld"><label class="lab">엑셀 열 이름</label><input data-f="header" value="${(q.header||'').replace(/"/g,'&quot;')}" /></div>
+          <div class="fld"><label class="lab">변수명(영문)</label><input data-f="var" value="${(q.var||'').replace(/"/g,'&quot;')}" /></div>
+          <div class="fld" style="flex:0 0 auto"><label class="lab">필수</label><label class="chk"><input type="checkbox" data-f="required" ${q.required?'checked':''}/> 필수</label></div>
+        </div>
+        ${needOpts?`<div class="row"><div class="fld" style="flex:1 1 100%"><label class="lab">보기 (쉼표로 구분)</label><input data-f="options" value="${opts.replace(/"/g,'&quot;')}" /></div></div>`:''}
+        ${needEnds?`<div class="row"><div class="fld" style="flex:1 1 100%"><label class="lab">양끝 라벨 (쉼표 구분 · 강도는 3개, 추천도는 2개)</label><input data-f="ends" value="${ends.replace(/"/g,'&quot;')}" /></div></div>`:''}
+        <div class="row"><div class="fld" style="flex:1 1 100%"><label class="lab">힌트 (선택)</label><input data-f="hint" value="${(q.hint||'').replace(/"/g,'&quot;')}" /></div></div>
+      </div>`;
+    }
+
+    // CFG를 화면 입력값으로 동기화
+    function sync(){
+      document.querySelectorAll('[data-meta]').forEach(el=>{ CFG.meta[el.dataset.meta] = el.value; });
+      document.querySelectorAll('[data-sectitle]').forEach(el=>{ CFG.sections[+el.dataset.sectitle].title = el.value; });
+      document.querySelectorAll('.q-card').forEach(card=>{
+        const [si,qi] = card.dataset.q.split('.').map(Number);
+        const q = CFG.sections[si].questions[qi];
+        card.querySelectorAll('[data-f]').forEach(el=>{
+          const f = el.dataset.f;
+          if(f==='required'){ q.required = el.checked; }
+          else if(f==='options'){ const v=el.value.split(',').map(s=>s.trim()).filter(Boolean); if(v.length)q.options=v; else delete q.options; }
+          else if(f==='ends'){ const v=el.value.split(',').map(s=>s.trim()).filter(Boolean); if(v.length)q.ends=v; else delete q.ends; }
+          else if(f==='hint'){ if(el.value.trim())q.hint=el.value.trim(); else delete q.hint; }
+          else { q[f] = el.value; }
+        });
+      });
+    }
+
+    function onType(si,qi,v){ sync(); CFG.sections[si].questions[qi].type=v; render(); }
+    function addQ(si){ sync(); CFG.sections[si].questions.push({var:'new_'+Date.now().toString().slice(-5),header:'새항목',label:'새 질문',type:'rating',required:false}); render(); }
+    function delQ(si,qi){ sync(); CFG.sections[si].questions.splice(qi,1); render(); }
+    function moveQ(si,qi,d){ sync(); const a=CFG.sections[si].questions; const j=qi+d; if(j<0||j>=a.length)return; [a[qi],a[j]]=[a[j],a[qi]]; render(); }
+    function addSec(){ sync(); CFG.sections.push({title:'새 단계',questions:[]}); render(); }
+    function delSec(si){ if(!confirm('이 단계와 안의 문항을 모두 삭제할까요?'))return; sync(); CFG.sections.splice(si,1); render(); }
+    function moveSec(si,d){ sync(); const j=si+d; if(j<0||j>=CFG.sections.length)return; [CFG.sections[si],CFG.sections[j]]=[CFG.sections[j],CFG.sections[si]]; render(); }
+
+    function toast(msg, err){ const t=$('#toast'); t.textContent=msg; t.className='toast show'+(err?' err':''); setTimeout(()=>t.className='toast',2200); }
+
+    $('#saveBtn').onclick = async ()=>{
+      sync();
+      try {
+        const res = await fetch('/api/questions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(CFG)});
+        const data = await res.json();
+        toast(data.message, !data.success);
+      } catch { toast('저장 실패: 서버 연결 확인', true); }
+    };
+
+    load();
+  </script>
+</body>
+</html>
