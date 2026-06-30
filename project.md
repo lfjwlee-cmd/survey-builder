@@ -482,6 +482,30 @@ index.html / server.js 코드는 더 이상 손대지 않습니다.
 
 ---
 
+# 🌐 5차 확장 — 공개 배포(WiFi 없이 어디서나) (2026-07-01)
+
+## (1) QR이 폰에서 안 되던 문제 해결
+- 원인: QR에 `localhost` 주소가 담겨 폰에선 접근 불가(`null 접근 불가`).
+- 해결: `server.js`에 `GET /api/host`(LAN IP 반환) 추가, `results.html` QR이 **PC 내부 IP(예 172.30.1.52)** 자동 사용 + localhost면 경고.
+- 단, LAN 방식은 **참여자가 PC와 같은 WiFi**일 때만 가능.
+
+## (2) WiFi 없는 환경(각자 LTE) → 공개 배포
+- 선택: **A. 클라우드 배포**, 단 **새 계정 없이 + 응답 영구보관** 요구 → **Google Apps Script 웹앱** 채택.
+- 구글이 설문 화면을 직접 호스팅, 응답은 **구글시트에 영구 저장**. 서버·GitHub·Render·요금 불필요(기존 구글 계정만).
+- 자료: `assets/apps-script/Code.gs`(CONFIG에 questions.json 주입) + `Form.html`(google.script.run로 제출),
+  가이드 `references/public-deploy.md`.
+- 결과 보기: 구글시트 실시간 / .xlsx 내려받아 `import.html`로 대시보드화.
+- 예시 번들 생성: `D:\신메뉴투표설문\apps-script\` (Code.gs+Form.html) — 바로 배포 가능.
+
+## (3) 접속 방식 정리
+| 상황 | 방식 |
+|---|---|
+| 매장·부스(같은 WiFi) | 로컬 Node + QR(LAN IP) — 지금 그대로 |
+| 어디서나·LTE·행사 | Apps Script 웹앱 공개 배포 (구글시트 저장) |
+| 대규모·완전 무난 | 구글폼 + `import.html` 정리 |
+
+---
+
 ## 진행 상태
 - [x] 9인 위원회 설계 · 변환 프롬프트 · 대시보드 템플릿
 - [x] HTML 폼 (관능5축·강도·NPS·PSM·후기회수·진행률·Claude 디자인)
