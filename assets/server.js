@@ -83,6 +83,20 @@ app.get('/api/results', (req, res) => {
   res.json({ fields: FIELDS, headers: headers || HEADERS, rows });
 });
 
+// ── 폰 접속용 LAN IP 안내 (QR 자동 생성에 사용) ──
+app.get('/api/host', (req, res) => {
+  const nets = require('os').networkInterfaces();
+  let ip = null;
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name]) {
+      if (net.family === 'IPv4' && !net.internal && !net.address.startsWith('169.254')) {
+        ip = ip || net.address;
+      }
+    }
+  }
+  res.json({ ip, port: PORT });
+});
+
 // ── 설문 항목 편집기(editor.html)용: questions.json 읽기/저장 ──
 app.get('/api/questions', (req, res) => {
   try { res.json(JSON.parse(fs.readFileSync(QUESTIONS_FILE, 'utf-8'))); }

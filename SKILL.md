@@ -127,6 +127,19 @@ Full step-by-step (add/remove/reorder questions, change wording, options) is in
 - All three pages use Google Fonts + (dashboards) CDN libraries, so they need internet. Note this
   if the user needs fully offline use.
 
+## Public deploy (no WiFi / anywhere on LTE)
+The local Node setup only works on the same WiFi (LAN IP). When participants must reach the survey
+from any network (events, remote), deploy publicly. The recommended zero-extra-account, persistent
+option is a **Google Apps Script web app** (Google hosts the form, responses save permanently to a
+Google Sheet). The bundle lives in `assets/apps-script/` (`Code.gs` + `Form.html`):
+- Generate the survey's `Code.gs` by replacing its `CONFIG` with the survey's questions.json content
+  (keep `Form.html` as-is — it renders any config and submits via `google.script.run`).
+- Then follow `references/public-deploy.md` (create Sheet → Extensions → Apps Script → paste both →
+  Deploy as Web App, access "Anyone" → get the public `/exec` URL → make a QR from it).
+- Results land in the Google Sheet; download as .xlsx and drop into `import.html` for the dashboard.
+Mention this whenever the user needs participants on different networks / LTE, or asks about hosting,
+QR not working on phones, or "localhost" errors on mobile.
+
 ## Google-Forms-only request
 If the user doesn't want to build a survey but just has a Google Forms response spreadsheet to
 summarize, you can skip the full scaffold: copy only `assets/import.html` somewhere and tell them

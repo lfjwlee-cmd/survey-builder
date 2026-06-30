@@ -251,8 +251,22 @@
     // QR 코드
     const qrModal = document.getElementById('qrModal');
     const qrUrlInput = document.getElementById('qrUrl');
-    function makeQR(){ const box=document.getElementById('qrbox'); box.innerHTML=''; new QRCode(box,{text:qrUrlInput.value,width:220,height:220,colorDark:'#141413',colorLight:'#faf9f5'}); }
-    document.getElementById('qrBtn').onclick = ()=>{ qrUrlInput.value = location.origin + '/index.html'; qrModal.classList.add('show'); makeQR(); };
+    function makeQR(){
+      const box=document.getElementById('qrbox'); box.innerHTML='';
+      const url=qrUrlInput.value.trim();
+      if(/localhost|127\.0\.0\.1/.test(url)){
+        box.innerHTML='<p class="note" style="color:#c64545">⚠️ 주소가 localhost입니다. 폰에서는 안 열려요.<br>위 칸에 PC 내부 IP 주소(192.x / 172.x)를 넣어주세요.</p>';
+        return;
+      }
+      new QRCode(box,{text:url,width:220,height:220,colorDark:'#141413',colorLight:'#faf9f5'});
+    }
+    document.getElementById('qrBtn').onclick = async ()=>{
+      let host = null;
+      try { host = (await (await fetch('/api/host')).json()); } catch {}
+      if(host && host.ip){ qrUrlInput.value = `http://${host.ip}:${host.port}/index.html`; }
+      else { qrUrlInput.value = location.origin + '/index.html'; }
+      qrModal.classList.add('show'); makeQR();
+    };
     document.getElementById('qrApply').onclick = makeQR;
     qrModal.onclick = e => { if(e.target===qrModal) qrModal.classList.remove('show'); };
 
