@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>시식 평가 결과 대시보드 · 인생푸드</title>
+  <title>설문 결과 대시보드</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -34,7 +34,7 @@
     .verdict .v-tag{font-size:13px;font-weight:500;letter-spacing:1px;text-transform:uppercase;opacity:.9;}
     .verdict .v-title{font-family:var(--display);font-size:30px;font-weight:500;margin:4px 0 8px;}
     .verdict .v-desc{font-size:14px;opacity:.92;line-height:1.6;}
-    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;}
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;}
     .kpi{background:var(--card);border-radius:12px;padding:18px 20px;}
     .kpi .label{font-size:13px;color:var(--muted);}
     .kpi .value{font-family:var(--display);font-size:32px;font-weight:500;line-height:1.1;margin:4px 0 10px;}
@@ -51,8 +51,6 @@
     .mini{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px;}
     .review{background:var(--card);border-radius:12px;padding:16px 18px;margin-bottom:10px;font-size:14px;line-height:1.6;}
     .review .meta{font-size:12px;color:var(--muted-soft);margin-top:6px;}
-    .tag{display:inline-block;font-size:12px;font-weight:500;padding:3px 10px;border-radius:99px;background:var(--card);color:var(--ink);}
-    .tag.go{background:#e3f5e8;color:#2f7a45;} .tag.hold{background:#faf0d6;color:#8a6a0e;} .tag.stop{background:#fae3e3;color:#a23636;}
     .kw{display:inline-flex;align-items:center;gap:6px;background:var(--card);border-radius:99px;padding:5px 12px;margin:0 6px 8px 0;font-size:13px;}
     .kw b{color:var(--primary);font-weight:500;}
     .empty{text-align:center;padding:64px 24px;color:var(--muted);}
@@ -62,7 +60,6 @@
     .rawtable{min-width:max-content;}
     .rawtable th,.rawtable td{white-space:nowrap;}
     .rawtable td:first-child,.rawtable th:first-child{position:sticky;left:0;background:var(--card);}
-    /* QR modal */
     .modal-bg{display:none;position:fixed;inset:0;background:rgba(20,20,19,.5);z-index:100;align-items:center;justify-content:center;padding:24px;}
     .modal-bg.show{display:flex;}
     .modal{background:var(--canvas);border-radius:16px;padding:32px;max-width:380px;width:100%;text-align:center;}
@@ -89,7 +86,7 @@
         <line x1="4" y1="4" x2="18" y2="18" stroke="#141413" stroke-width="2" stroke-linecap="round"/>
         <line x1="18" y1="4" x2="4" y2="18" stroke="#141413" stroke-width="2" stroke-linecap="round"/>
       </svg>
-      인생푸드 Lab · 결과 대시보드
+      결과 대시보드
     </span>
     <div class="actions">
       <button class="btn" id="qrBtn">📱 설문 QR</button>
@@ -106,7 +103,6 @@
     <div class="empty"><div class="big">⏳</div>데이터를 불러오는 중…</div>
   </div>
 
-  <!-- QR Modal -->
   <div class="modal-bg" id="qrModal">
     <div class="modal">
       <h3>설문 QR 코드</h3>
@@ -121,9 +117,7 @@
   <script>
     const NUM = n => Math.round(n*10)/10;
     const PCT = n => Math.round(n);
-
     function gauge(pct, teal){ return `<div class="bar${teal?' teal':''}"><i style="width:${Math.max(0,Math.min(100,pct))}%"></i></div>`; }
-
     function sig(ok, mid){ return ok ? '🟢' : (mid ? '🟡' : '🔴'); }
 
     async function load(){
@@ -142,56 +136,97 @@
 
       const avg = k => { const v=recs.map(r=>+r[k]).filter(x=>!isNaN(x)); return v.length? v.reduce((a,b)=>a+b,0)/v.length : 0; };
       const std = k => { const v=recs.map(r=>+r[k]).filter(x=>!isNaN(x)); if(v.length<2)return 0; const m=v.reduce((a,b)=>a+b,0)/v.length; return Math.sqrt(v.reduce((a,b)=>a+(b-m)**2,0)/v.length); };
+      const present = k => keys.includes(k) && recs.some(r => r[k] !== '' && r[k] != null);
+
+      // 문항 메타(라벨/유형) 로드 — 설문 구조에 맞춰 대시보드를 적응시킨다
+      let qmap = {};
+      try { const qcfg = await (await fetch('/api/questions')).json(); qcfg.sections.forEach(s=>(s.questions||[]).forEach(q=>qmap[q.var]=q)); } catch {}
+      const labelOf = k => (qmap[k] && qmap[k].label) || colHeaders[keys.indexOf(k)] || k;
+
+      // 있는 항목만 동적으로 구성
+      const sensoryKeys   = keys.filter(k => k.startsWith('score_') && k !== 'score_overall' && present(k));
+      const intensityKeys = keys.filter(k => k.startsWith('intensity_') && present(k));
+      const voteKeys      = keys.filter(k => qmap[k] && (qmap[k].type==='select' || qmap[k].type==='segment') && present(k));
+      const hasOverall = present('score_overall');
+      const hasRepurchase = present('repurchase');
+      const hasNps = present('nps');
+      const hasReview = present('review_oneline') || present('improve');
 
       const overall = avg('score_overall');
       const repurchaseRate = recs.filter(r=>+r.repurchase>=4).length / n * 100;
       const npsVals = recs.map(r=>+r.nps).filter(x=>!isNaN(x));
       const promoters = npsVals.filter(x=>x>=9).length, detractors = npsVals.filter(x=>x<=6).length;
       const nps = npsVals.length ? Math.round((promoters-detractors)/npsVals.length*100) : 0;
-      const priceAvgIdx = 0; // 가격은 분포로 표시
 
-      // 출시 판정
-      let vClass='stop', vTag='보류', vTitle='🔴 출시 보류', vDesc='핵심 지표가 기준에 미달합니다. 레시피 보완 후 재평가가 필요합니다.';
-      if(overall>=4.0 && repurchaseRate>=70 && nps>0){ vClass='go'; vTag='출시 권장'; vTitle='🟢 출시 권장'; vDesc='종합 만족·재구매·추천 지표가 모두 기준을 통과했습니다. 출시를 진행해도 좋습니다.'; }
-      else if(overall>=3.5){ vClass='hold'; vTag='보완 후 재검토'; vTitle='🟡 보완 후 재검토'; vDesc='가능성은 있으나 일부 지표가 기준에 못 미칩니다. 약점 항목을 개선해 재평가하세요.'; }
+      // 출시 판정 (종합 점수 항목이 있을 때만)
+      let verdictHtml = '';
+      if(hasOverall){
+        let vClass='stop', vTag='보류', vTitle='🔴 출시 보류', vDesc='핵심 지표가 기준에 미달합니다. 보완 후 재평가가 필요합니다.';
+        if(overall>=4.0 && (!hasRepurchase||repurchaseRate>=70) && (!hasNps||nps>0)){ vClass='go'; vTag='출시 권장'; vTitle='🟢 출시 권장'; vDesc='주요 지표가 기준을 통과했습니다. 출시를 진행해도 좋습니다.'; }
+        else if(overall>=3.5){ vClass='hold'; vTag='보완 후 재검토'; vTitle='🟡 보완 후 재검토'; vDesc='가능성은 있으나 일부 지표가 기준에 못 미칩니다. 약점 항목을 개선해 재평가하세요.'; }
+        verdictHtml = `<div class="verdict ${vClass}"><div class="v-tag">${vTag}</div><div class="v-title">${vTitle}</div><div class="v-desc">${vDesc}</div></div><p class="note">판정 기준: 종합 4.0↑ · 재구매 70%↑ · NPS 양수 → 🟢</p>`;
+      }
 
-      const sensory = [
-        ['맛','score_taste'],['향','score_aroma'],['식감','score_texture'],
-        ['외관','score_appearance'],['온도·제공','score_temp']
-      ];
-      const intensity = [
-        ['단맛','intensity_sweet','부족↔과함'],['짠맛','intensity_salty','부족↔과함'],['느끼함','intensity_greasy','담백↔느끼']
-      ];
+      // 핵심 KPI (있는 지표만)
+      const kpis = [];
+      if(hasOverall)    kpis.push(`<div class="kpi"><div class="label">종합 만족도 ${sig(overall>=4,overall>=3.5)}</div><div class="value">${NUM(overall)}<span class="sig"> / 5</span></div>${gauge(overall/5*100)}</div>`);
+      if(hasRepurchase) kpis.push(`<div class="kpi"><div class="label">재구매 의향 ${sig(repurchaseRate>=70,repurchaseRate>=50)}</div><div class="value">${PCT(repurchaseRate)}<span class="sig">%</span></div>${gauge(repurchaseRate)}</div>`);
+      if(hasNps)        kpis.push(`<div class="kpi"><div class="label">추천 NPS ${sig(nps>0,nps>=-10)}</div><div class="value">${nps>0?'+':''}${nps}</div>${gauge((nps+100)/2)}</div>`);
+      kpis.push(`<div class="kpi"><div class="label">총 응답 수</div><div class="value">${n}<span class="sig">명</span></div>${gauge(100)}</div>`);
+      const kpiHtml = `<div class="section-title">📌 핵심 KPI</div><div class="kpi-grid">${kpis.join('')}</div>`;
 
-      // 세그먼트 교차분석 (연령 × 성별)
-      const segMap = {};
-      recs.forEach(r=>{ const key=`${r.age_group||'-'} ${r.gender||'-'}`; (segMap[key]=segMap[key]||[]).push(r); });
-      const segRows = Object.entries(segMap).map(([k,arr])=>{
-        const o = arr.reduce((a,r)=>a+(+r.score_overall||0),0)/arr.length;
-        const rp = arr.filter(r=>+r.repurchase>=4).length/arr.length*100;
-        return {k, n:arr.length, o, rp};
-      }).sort((a,b)=>b.o-a.o);
+      // 점수형 항목 (있을 때만)
+      const sensoryHtml = sensoryKeys.length ? `<div class="section-title">🧪 점수 평가 (5점)</div>
+        <div class="table-scroll"><table><thead><tr><th>항목</th><th>점수</th><th style="width:40%">분포</th><th>신호</th></tr></thead><tbody>
+        ${sensoryKeys.map(k=>{const a=avg(k);return `<tr><td>${labelOf(k)}</td><td class="mini">${NUM(a)}</td><td><div class="cell-bar">${gauge(a/5*100)}</div></td><td>${sig(a>=4,a>=3.3)}</td></tr>`;}).join('')}
+        ${hasOverall?`<tr><td>종합 만족</td><td class="mini">${NUM(overall)}</td><td>${gauge(overall/5*100)}</td><td>${sig(overall>=4,overall>=3.5)}</td></tr>`:''}
+        </tbody></table></div>` : '';
 
-      // 홍보 활용 가능 후기 (동의 + NPS 추천군)
-      const promo = recs.filter(r=>r.promo_consent==='동의' && +r.nps>=9 && r.review_oneline)
-                        .map(r=>({txt:r.review_oneline, meta:`${r.age_group||''} ${r.gender||''} · NPS ${r.nps}`}));
+      // 강도 진단 (있을 때만)
+      const intenHtml = intensityKeys.length ? `<div class="section-title">⚖️ 강도 진단 (1 부족 ↔ 3 적정 ↔ 5 과함)</div>
+        <div class="table-scroll"><table><thead><tr><th>항목</th><th>평균</th><th style="width:40%">강도</th><th>진단</th></tr></thead><tbody>
+        ${intensityKeys.map(k=>{const a=avg(k);const diag=a>3.6?'과함 ▲':a<2.4?'부족 ▼':'적정 ●';return `<tr><td>${labelOf(k)}</td><td class="mini">${NUM(a)}</td><td>${gauge(a/5*100,true)}</td><td class="mini">${diag}</td></tr>`;}).join('')}
+        </tbody></table></div>` : '';
 
-      // 키워드 빈도 (한줄후기 + 개선의견)
-      const stop = new Set(['그리고','너무','정말','조금','약간','그냥','좀','수','것','거','게','해서','했어요','좋아요','있어요','같아요','없어요','해요','네요','어요','아요']);
-      const freq = {};
-      recs.forEach(r=>{ [r.review_oneline, r.improve].forEach(t=>{
-        if(!t) return; String(t).split(/[\s,.!?·~"'()]+/).forEach(w=>{ w=w.trim(); if(w.length>=2 && !stop.has(w)) freq[w]=(freq[w]||0)+1; });
-      });});
-      const topKw = Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,10);
+      // 세그먼트 교차분석 (종합 점수가 있을 때만)
+      let segHtml = '';
+      if(hasOverall){
+        const segMap={}; recs.forEach(r=>{const key=`${r.age_group||'-'} ${r.gender||'-'}`;(segMap[key]=segMap[key]||[]).push(r);});
+        const segRows=Object.entries(segMap).map(([k,arr])=>({k,n:arr.length,o:arr.reduce((a,r)=>a+(+r.score_overall||0),0)/arr.length,rp:arr.filter(r=>+r.repurchase>=4).length/arr.length*100})).sort((a,b)=>b.o-a.o);
+        segHtml=`<div class="section-title">👥 세그먼트 교차분석 (연령 × 성별)</div>
+          <div class="table-scroll"><table><thead><tr><th>세그먼트</th><th>n</th><th>종합</th><th>재구매</th><th>신호</th></tr></thead><tbody>
+          ${segRows.map(s=>`<tr><td>${s.k}</td><td class="mini">${s.n}</td><td class="mini">${NUM(s.o)}</td><td class="mini">${PCT(s.rp)}%</td><td>${sig(s.o>=4,s.o>=3.5)}</td></tr>`).join('')}
+          </tbody></table></div>`;
+      }
 
-      const priceDist = {};
-      recs.forEach(r=>{ const p=r.price_fair||'미응답'; priceDist[p]=(priceDist[p]||0)+1; });
+      // 🗳️ 선택형(select/segment) 문항 = 투표 자동 집계
+      const voteHtml = voteKeys.map(k=>{
+        const dist={}; recs.forEach(r=>{const v=(r[k]??'')===''?'(미응답)':String(r[k]);dist[v]=(dist[v]||0)+1;});
+        const sorted=Object.entries(dist).sort((a,b)=>b[1]-a[1]); const win=sorted.length?sorted[0][0]:'';
+        return `<div class="section-title">🗳️ ${labelOf(k)}</div>
+          <div class="table-scroll"><table><thead><tr><th>선택지</th><th>표수</th><th style="width:45%">비율</th><th>최다</th></tr></thead><tbody>
+          ${sorted.map(([opt,c])=>`<tr><td>${opt}</td><td class="mini">${c}표 (${PCT(c/n*100)}%)</td><td>${gauge(c/n*100)}</td><td>${opt===win?'🏆':''}</td></tr>`).join('')}
+          </tbody></table></div>`;
+      }).join('');
+
+      // 키워드 빈도 + 홍보 후기 (주관식/동의 항목이 있을 때만)
+      let reviewHtml = '';
+      if(hasReview){
+        const stop = new Set(['그리고','너무','정말','조금','약간','그냥','좀','수','것','거','게','해서','했어요','좋아요','있어요','같아요','없어요','해요','네요','어요','아요']);
+        const freq={}; recs.forEach(r=>{ [r.review_oneline,r.improve].forEach(t=>{ if(!t)return; String(t).split(/[\s,.!?·~"'()]+/).forEach(w=>{w=w.trim(); if(w.length>=2&&!stop.has(w))freq[w]=(freq[w]||0)+1;}); }); });
+        const topKw=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,10);
+        const promo=recs.filter(r=>r.promo_consent==='동의' && +r.nps>=9 && r.review_oneline).map(r=>({txt:r.review_oneline,meta:`${r.age_group||''} ${r.gender||''} · NPS ${r.nps}`}));
+        reviewHtml = `<div class="section-title">💬 키워드 빈도</div>
+          <div>${topKw.length? topKw.map(([w,c])=>`<span class="kw">${w} <b>${c}</b></span>`).join('') : '<span class="note">키워드 없음</span>'}</div>
+          ${(hasNps && present('promo_consent')) ? `<div class="section-title">📣 홍보 활용 가능 후기 (동의 + NPS 추천군)</div>
+          ${promo.length? promo.map(p=>`<div class="review">"${p.txt}"<div class="meta">— ${p.meta}</div></div>`).join('') : '<p class="note">아직 홍보 활용 동의 + 고추천 후기가 없습니다.</p>'}` : ''}`;
+      }
 
       const reliability = n<10 ? '⚠️ 표본 부족(n&lt;10) — 참고용 수치입니다.' : `표본 ${n}명 — 통계적으로 활용 가능.`;
-      const highStd = sensory.filter(([,k])=>std(k)>=1.2).map(([n])=>n);
+      const highStd = sensoryKeys.filter(k=>std(k)>=1.2).map(k=>labelOf(k));
 
       document.getElementById('root').innerHTML = `
-        <h1>시식 평가 결과 보고서</h1>
+        <h1>설문 결과 보고서</h1>
         <p class="sub">응답자 n = ${n}명 · 자동 집계 · ${new Date().toLocaleString('ko-KR')}</p>
 
         <div class="section-title">🗳️ 개별 응답 (누가 · 언제 · 무엇을)</div>
@@ -200,45 +235,13 @@
         </tbody></table></div>
         <p class="note">← 좌우로 밀어서 전체 항목을 볼 수 있습니다. (모바일 포함)</p>
 
-        <div class="verdict ${vClass}">
-          <div class="v-tag">${vTag}</div>
-          <div class="v-title">${vTitle}</div>
-          <div class="v-desc">${vDesc}</div>
-        </div>
-        <p class="note">판정 기준: 종합 4.0↑ · 재구매 70%↑ · NPS 양수 → 🟢</p>
-
-        <div class="section-title">📌 핵심 KPI</div>
-        <div class="kpi-grid">
-          <div class="kpi"><div class="label">종합 만족도 ${sig(overall>=4,overall>=3.5)}</div><div class="value">${NUM(overall)}<span class="sig"> / 5</span></div>${gauge(overall/5*100)}</div>
-          <div class="kpi"><div class="label">재구매 의향 ${sig(repurchaseRate>=70,repurchaseRate>=50)}</div><div class="value">${PCT(repurchaseRate)}<span class="sig">%</span></div>${gauge(repurchaseRate)}</div>
-          <div class="kpi"><div class="label">추천 NPS ${sig(nps>0,nps>=-10)}</div><div class="value">${nps>0?'+':''}${nps}</div>${gauge((nps+100)/2)}</div>
-          <div class="kpi"><div class="label">추천군 / 비추천군</div><div class="value">${promoters}<span class="sig"> : ${detractors}</span></div>${gauge(promoters/n*100)}</div>
-        </div>
-
-        <div class="section-title">🧪 관능 평가 (5점)</div>
-        <table><thead><tr><th>평가 축</th><th>점수</th><th style="width:40%">분포</th><th>신호</th></tr></thead><tbody>
-          ${sensory.map(([nm,k])=>{const a=avg(k);return `<tr><td>${nm}</td><td class="mini">${NUM(a)}</td><td><div class="cell-bar">${gauge(a/5*100)}</div></td><td>${sig(a>=4,a>=3.3)}</td></tr>`;}).join('')}
-        </tbody></table>
-        <div class="section-title">⚖️ 강도 진단 (1 부족 ↔ 3 적정 ↔ 5 과함)</div>
-        <table><thead><tr><th>항목</th><th>평균</th><th style="width:40%">강도</th><th>진단</th></tr></thead><tbody>
-          ${intensity.map(([nm,k])=>{const a=avg(k);const diag=a>3.6?'과함 ▲':a<2.4?'부족 ▼':'적정 ●';return `<tr><td>${nm}</td><td class="mini">${NUM(a)}</td><td>${gauge(a/5*100,true)}</td><td class="mini">${diag}</td></tr>`;}).join('')}
-        </tbody></table>
-
-        <div class="section-title">👥 세그먼트 교차분석 (연령 × 성별)</div>
-        <table><thead><tr><th>세그먼트</th><th>n</th><th>종합</th><th>재구매</th><th>신호</th></tr></thead><tbody>
-          ${segRows.map(s=>`<tr><td>${s.k}</td><td class="mini">${s.n}</td><td class="mini">${NUM(s.o)}</td><td class="mini">${PCT(s.rp)}%</td><td>${sig(s.o>=4,s.o>=3.5)}</td></tr>`).join('')}
-        </tbody></table>
-
-        <div class="section-title">💰 가격 적정성 (PSM)</div>
-        <table><thead><tr><th>적정 가격대</th><th>응답</th><th style="width:45%">비율</th></tr></thead><tbody>
-          ${Object.entries(priceDist).sort((a,b)=>b[1]-a[1]).map(([p,c])=>`<tr><td>${p}</td><td class="mini">${c}명</td><td>${gauge(c/n*100)}</td></tr>`).join('')}
-        </tbody></table>
-
-        <div class="section-title">💬 키워드 빈도 (후기 · 개선의견)</div>
-        <div>${topKw.length? topKw.map(([w,c])=>`<span class="kw">${w} <b>${c}</b></span>`).join('') : '<span class="note">키워드 없음</span>'}</div>
-
-        <div class="section-title">📣 홍보 활용 가능 후기 (동의 + NPS 추천군)</div>
-        ${promo.length? promo.map(p=>`<div class="review">"${p.txt}"<div class="meta">— ${p.meta}</div></div>`).join('') : '<p class="note">아직 홍보 활용 동의 + 고추천 후기가 없습니다.</p>'}
+        ${verdictHtml}
+        ${kpiHtml}
+        ${sensoryHtml}
+        ${intenHtml}
+        ${segHtml}
+        ${voteHtml}
+        ${reviewHtml}
 
         <div class="section-title">📎 신뢰도</div>
         <p class="note">${reliability}${highStd.length?` · 호불호가 갈린 항목: ${highStd.join(', ')} (표준편차 높음)`:''}</p>
@@ -248,67 +251,46 @@
     // QR 코드
     const qrModal = document.getElementById('qrModal');
     const qrUrlInput = document.getElementById('qrUrl');
-    function makeQR(){
-      const box = document.getElementById('qrbox'); box.innerHTML='';
-      new QRCode(box, { text: qrUrlInput.value, width:220, height:220, colorDark:'#141413', colorLight:'#faf9f5' });
-    }
-    document.getElementById('qrBtn').onclick = ()=>{
-      const guess = location.origin.replace('localhost', location.hostname);
-      qrUrlInput.value = location.origin.includes('localhost')
-        ? location.origin + '/index.html' : location.origin + '/index.html';
-      qrModal.classList.add('show'); makeQR();
-    };
+    function makeQR(){ const box=document.getElementById('qrbox'); box.innerHTML=''; new QRCode(box,{text:qrUrlInput.value,width:220,height:220,colorDark:'#141413',colorLight:'#faf9f5'}); }
+    document.getElementById('qrBtn').onclick = ()=>{ qrUrlInput.value = location.origin + '/index.html'; qrModal.classList.add('show'); makeQR(); };
     document.getElementById('qrApply').onclick = makeQR;
     qrModal.onclick = e => { if(e.target===qrModal) qrModal.classList.remove('show'); };
 
-    // PDF 저장 (인쇄 아님 — 파일로 직접 저장)
+    // PDF 저장
     async function savePDF(el, filename){
-      const btn = document.getElementById('pdfBtn');
-      const old = btn.textContent; btn.textContent = '생성 중…'; btn.disabled = true;
+      const btn=document.getElementById('pdfBtn'); const old=btn.textContent; btn.textContent='생성 중…'; btn.disabled=true;
       try {
-        const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#faf9f5', useCORS: true });
-        const img = canvas.toDataURL('image/jpeg', 0.95);
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pw = pdf.internal.pageSize.getWidth();
-        const ph = pdf.internal.pageSize.getHeight();
-        const imgH = canvas.height * pw / canvas.width;
-        let left = imgH, pos = 0;
-        pdf.addImage(img, 'JPEG', 0, pos, pw, imgH);
-        left -= ph;
-        while (left > 0) { pos = left - imgH; pdf.addPage(); pdf.addImage(img, 'JPEG', 0, pos, pw, imgH); left -= ph; }
+        const canvas = await html2canvas(el,{scale:2,backgroundColor:'#faf9f5',useCORS:true});
+        const img = canvas.toDataURL('image/jpeg',0.95);
+        const { jsPDF } = window.jspdf; const pdf = new jsPDF('p','mm','a4');
+        const pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight();
+        const imgH=canvas.height*pw/canvas.width; let left=imgH, pos=0;
+        pdf.addImage(img,'JPEG',0,pos,pw,imgH); left-=ph;
+        while(left>0){ pos=left-imgH; pdf.addPage(); pdf.addImage(img,'JPEG',0,pos,pw,imgH); left-=ph; }
         pdf.save(filename);
-      } catch(e){ alert('PDF 생성 중 오류가 발생했습니다: ' + e.message); }
-      finally { btn.textContent = old; btn.disabled = false; }
+      } catch(e){ alert('PDF 생성 오류: '+e.message); } finally { btn.textContent=old; btn.disabled=false; }
     }
-    document.getElementById('pdfBtn').onclick = ()=>{
-      const d = new Date();
-      const stamp = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
-      savePDF(document.getElementById('root'), `시식평가결과_${stamp}.pdf`);
-    };
+    const stamp = ()=>{ const d=new Date(); return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`; };
+    document.getElementById('pdfBtn').onclick = ()=> savePDF(document.getElementById('root'), `설문결과_${stamp()}.pdf`);
 
-    // 워드(.doc) 저장 — 대시보드 내용을 Word가 여는 HTML 문서로 다운로드
+    // 워드(.doc) 저장
     document.getElementById('wordBtn').onclick = ()=>{
       const inner = document.getElementById('root').innerHTML;
       const html = `<!DOCTYPE html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>
         body{font-family:'Malgun Gothic','맑은 고딕',sans-serif;color:#141413;}
-        h1{font-size:22pt;} .section-title{font-size:11pt;color:#6c6a64;font-weight:bold;margin:16pt 0 6pt;text-transform:uppercase;border-bottom:1px solid #ccc;padding-bottom:3pt;}
+        h1{font-size:22pt;} .section-title{font-size:11pt;color:#6c6a64;font-weight:bold;margin:16pt 0 6pt;border-bottom:1px solid #ccc;padding-bottom:3pt;}
         table{border-collapse:collapse;width:100%;font-size:10pt;} th,td{border:1px solid #ddd;padding:5pt 8pt;text-align:left;}
         .verdict{padding:12pt;color:#fff;font-weight:bold;} .verdict.go{background:#5db872;}.verdict.hold{background:#d4a017;}.verdict.stop{background:#c64545;}
-        .bar{display:none;} .kpi{display:inline-block;border:1px solid #ddd;padding:8pt 12pt;margin:3pt;border-radius:6pt;} .kpi .value{font-size:18pt;font-weight:bold;}
-        .review{border:1px solid #ddd;padding:6pt 10pt;margin:4pt 0;} .kw{display:inline-block;border:1px solid #ddd;padding:2pt 8pt;margin:2pt;border-radius:10pt;}
+        .bar{display:none;} .kpi{display:inline-block;border:1px solid #ddd;padding:8pt 12pt;margin:3pt;} .kpi .value{font-size:18pt;font-weight:bold;}
+        .review{border:1px solid #ddd;padding:6pt 10pt;margin:4pt 0;} .kw{display:inline-block;border:1px solid #ddd;padding:2pt 8pt;margin:2pt;}
       </style></head><body>${inner}</body></html>`;
       const blob = new Blob(['﻿', html], { type:'application/msword' });
-      const d = new Date();
-      const stamp = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob); a.download = `시식평가결과_${stamp}.doc`; a.click();
-      URL.revokeObjectURL(a.href);
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`설문결과_${stamp()}.doc`; a.click(); URL.revokeObjectURL(a.href);
     };
 
     document.getElementById('refreshBtn').onclick = load;
     load();
-    setInterval(load, 15000); // 15초마다 자동 갱신
+    setInterval(load, 15000);
   </script>
 </body>
 </html>
