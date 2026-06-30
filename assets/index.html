@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>시식 평가 설문 · 인생푸드</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --color-primary:#cc785c; --color-primary-active:#a9583e; --color-primary-disabled:#e6dfd8;
+      --color-ink:#141413; --color-body:#3d3d3a; --color-body-strong:#252523;
+      --color-muted:#6c6a64; --color-muted-soft:#8e8b82;
+      --color-hairline:#e6dfd8; --color-hairline-soft:#ebe6df;
+      --color-canvas:#faf9f5; --color-surface-soft:#f5f0e8; --color-surface-card:#efe9de;
+      --color-surface-dark:#181715; --color-on-dark:#faf9f5; --color-on-dark-soft:#a09d96;
+      --color-success:#5db872; --color-error:#c64545; --color-accent-teal:#5db8a6;
+      --font-display:"Cormorant Garamond","Tiempos Headline",Georgia,serif;
+      --font-body:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      --rounded-md:8px; --rounded-lg:12px; --rounded-pill:9999px;
+      --spacing-xs:8px; --spacing-sm:12px; --spacing-md:16px; --spacing-lg:24px;
+      --spacing-xl:32px; --spacing-xxl:48px; --spacing-section:96px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--color-canvas);color:var(--color-ink);font-family:var(--font-body);font-size:16px;line-height:1.55;min-height:100vh;}
+    .top-nav{height:64px;background:var(--color-canvas);border-bottom:1px solid var(--color-hairline-soft);display:flex;align-items:center;padding:0 var(--spacing-xl);position:sticky;top:0;z-index:50;}
+    .nav-brand{display:flex;align-items:center;gap:var(--spacing-xs);text-decoration:none;}
+    .nav-wordmark{font-size:15px;font-weight:500;color:var(--color-ink);}
+    .nav-badge{margin-left:var(--spacing-sm);background:var(--color-surface-card);color:var(--color-ink);font-size:12px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;padding:3px 10px;border-radius:var(--rounded-pill);}
+    .progress-track{height:3px;background:var(--color-hairline-soft);}
+    .progress-fill{height:100%;width:0;background:var(--color-primary);transition:width .3s ease;}
+    .hero-band{padding:var(--spacing-xxl) var(--spacing-xl) var(--spacing-lg);max-width:640px;margin:0 auto;text-align:center;}
+    .hero-eyebrow{display:inline-block;font-size:12px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--color-primary);margin-bottom:var(--spacing-md);}
+    .hero-title{font-family:var(--font-display);font-size:42px;font-weight:400;line-height:1.1;letter-spacing:-0.8px;margin-bottom:var(--spacing-md);}
+    .hero-sub{font-size:16px;color:var(--color-muted);max-width:480px;margin:0 auto;line-height:1.6;}
+    .hero-meta{margin-top:var(--spacing-md);font-size:13px;color:var(--color-muted-soft);}
+    .form-wrap{max-width:560px;margin:0 auto;padding:0 var(--spacing-xl) var(--spacing-section);}
+    .form-card{background:var(--color-surface-card);border-radius:var(--rounded-lg);padding:var(--spacing-xl);margin-bottom:var(--spacing-lg);}
+    .section-label{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--color-muted);margin-bottom:var(--spacing-lg);padding-bottom:var(--spacing-sm);border-bottom:1px solid var(--color-hairline);}
+    .section-label .num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:var(--rounded-pill);background:var(--color-primary);color:#fff;font-size:11px;letter-spacing:0;}
+    .form-group{margin-bottom:var(--spacing-lg);}
+    .form-group:last-child{margin-bottom:0;}
+    label.field-label{display:block;font-size:14px;font-weight:500;color:var(--color-body-strong);margin-bottom:6px;}
+    label.field-label .req{color:var(--color-primary);margin-left:2px;}
+    .field-hint{font-size:13px;color:var(--color-muted-soft);margin-bottom:8px;}
+    input[type="text"],input[type="email"],select{width:100%;height:40px;padding:10px 14px;background:var(--color-canvas);color:var(--color-ink);border:1px solid var(--color-hairline);border-radius:var(--rounded-md);font-family:var(--font-body);font-size:16px;outline:none;transition:border-color .15s;}
+    select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236c6a64' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;cursor:pointer;}
+    input:focus,select:focus,textarea:focus{border-color:var(--color-primary);box-shadow:0 0 0 3px rgba(204,120,92,.15);}
+    input::placeholder,textarea::placeholder{color:var(--color-muted-soft);}
+    .seg-row{display:flex;gap:var(--spacing-xs);}
+    .seg-row input[type="radio"]{display:none;}
+    .seg-row .seg{flex:1;text-align:center;padding:10px 6px;background:var(--color-canvas);border:1px solid var(--color-hairline);border-radius:var(--rounded-md);cursor:pointer;font-size:14px;font-weight:500;color:var(--color-muted);transition:border-color .15s,color .15s;}
+    .seg-row .seg:hover{border-color:var(--color-primary);color:var(--color-ink);}
+    .seg-row input[type="radio"]:checked + .seg{background:var(--color-primary);border-color:var(--color-primary);color:#fff;}
+    .rating-row{display:flex;gap:var(--spacing-xs);}
+    .rating-row input[type="radio"]{display:none;}
+    .rating-row .r-label{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;background:var(--color-canvas);border:1px solid var(--color-hairline);border-radius:var(--rounded-md);cursor:pointer;font-size:12px;font-weight:500;color:var(--color-muted);line-height:1;transition:border-color .15s,color .15s;}
+    .rating-row .r-label .emoji{font-size:18px;}
+    .rating-row .r-label:hover{border-color:var(--color-primary);color:var(--color-ink);}
+    .rating-row input[type="radio"]:checked + .r-label{background:var(--color-primary);border-color:var(--color-primary);color:#fff;}
+    .scale-row{display:flex;gap:6px;}
+    .scale-row input[type="radio"]{display:none;}
+    .scale-row .s-dot{flex:1;text-align:center;padding:9px 4px;background:var(--color-canvas);border:1px solid var(--color-hairline);border-radius:var(--rounded-md);cursor:pointer;font-size:13px;font-weight:500;color:var(--color-muted);transition:all .15s;}
+    .scale-row .s-dot:hover{border-color:var(--color-accent-teal);color:var(--color-ink);}
+    .scale-row input[type="radio"]:checked + .s-dot{background:var(--color-accent-teal);border-color:var(--color-accent-teal);color:#fff;}
+    .scale-ends{display:flex;justify-content:space-between;margin-top:6px;font-size:12px;color:var(--color-muted-soft);}
+    textarea{width:100%;padding:10px 14px;background:var(--color-canvas);color:var(--color-ink);border:1px solid var(--color-hairline);border-radius:var(--rounded-md);font-family:var(--font-body);font-size:16px;line-height:1.6;resize:vertical;min-height:90px;outline:none;transition:border-color .15s;}
+    .nps-row{display:grid;grid-template-columns:repeat(11,1fr);gap:4px;}
+    .nps-row input[type="radio"]{display:none;}
+    .nps-row .n-num{text-align:center;padding:8px 0;background:var(--color-canvas);border:1px solid var(--color-hairline);border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;color:var(--color-muted);transition:all .15s;}
+    .nps-row .n-num:hover{border-color:var(--color-primary);color:var(--color-ink);}
+    .nps-row input[type="radio"]:checked + .n-num{background:var(--color-primary);border-color:var(--color-primary);color:#fff;}
+    .consent{display:flex;align-items:flex-start;gap:10px;padding:14px;background:var(--color-canvas);border:1px solid var(--color-hairline);border-radius:var(--rounded-md);cursor:pointer;}
+    .consent input{margin-top:3px;width:16px;height:16px;accent-color:var(--color-primary);flex-shrink:0;}
+    .consent span{font-size:13px;color:var(--color-body);line-height:1.5;}
+    .ends-2{display:flex;justify-content:space-between;margin-top:6px;font-size:12px;color:var(--color-muted-soft);}
+    .btn-primary{display:block;width:100%;height:44px;padding:12px 20px;background:var(--color-primary);color:#fff;border:none;border-radius:var(--rounded-md);font-family:var(--font-body);font-size:15px;font-weight:500;cursor:pointer;transition:background .15s;}
+    .btn-primary:hover{background:var(--color-primary-active);}
+    .btn-primary:active{transform:scale(.99);}
+    .btn-primary:disabled{background:var(--color-primary-disabled);color:var(--color-muted);cursor:not-allowed;}
+    .alert{display:none;margin-top:var(--spacing-md);padding:12px 14px;border-radius:var(--rounded-md);font-size:14px;font-weight:500;}
+    .alert.error{background:#fdf1f1;color:var(--color-error);border:1px solid #f4bcbc;}
+    .done-band{display:none;background:var(--color-primary);border-radius:var(--rounded-lg);padding:var(--spacing-xxl) var(--spacing-xl);text-align:center;}
+    .done-band .done-icon{font-size:2.4rem;margin-bottom:var(--spacing-md);}
+    .done-band h2{font-family:var(--font-display);font-size:28px;font-weight:400;letter-spacing:-0.3px;color:#fff;margin-bottom:var(--spacing-sm);}
+    .done-band p{font-size:16px;color:rgba(255,255,255,.85);line-height:1.6;margin-bottom:var(--spacing-xl);}
+    .btn-secondary{display:inline-block;height:40px;padding:11px 20px;background:var(--color-canvas);color:var(--color-ink);border:1px solid var(--color-hairline);border-radius:var(--rounded-md);font-family:var(--font-body);font-size:14px;font-weight:500;cursor:pointer;}
+    .btn-secondary:hover{background:var(--color-surface-card);}
+    .footer{background:var(--color-surface-dark);padding:var(--spacing-xl);}
+    .footer-inner{max-width:560px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--spacing-md);}
+    .footer-name{font-size:13px;font-weight:500;color:var(--color-on-dark);opacity:.5;}
+    .footer-copy{font-size:13px;color:var(--color-on-dark-soft);}
+    .loading{max-width:560px;margin:0 auto;padding:64px 24px;text-align:center;color:var(--color-muted);}
+    @media (max-width:600px){ .hero-title{font-size:30px;} .form-card{padding:var(--spacing-lg);} .nps-row{gap:3px;} .nps-row .n-num{padding:7px 0;font-size:12px;} }
+  </style>
+</head>
+<body>
+
+  <nav class="top-nav">
+    <a class="nav-brand" href="#">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+        <line x1="11" y1="1" x2="11" y2="21" stroke="#141413" stroke-width="2" stroke-linecap="round"/>
+        <line x1="1" y1="11" x2="21" y2="11" stroke="#141413" stroke-width="2" stroke-linecap="round"/>
+        <line x1="4" y1="4" x2="18" y2="18" stroke="#141413" stroke-width="2" stroke-linecap="round"/>
+        <line x1="18" y1="4" x2="4" y2="18" stroke="#141413" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span class="nav-wordmark" id="navBrand">인생푸드 Lab</span>
+    </a>
+    <span class="nav-badge" id="navBadge">시식 평가</span>
+  </nav>
+
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+
+  <section class="hero-band">
+    <span class="hero-eyebrow" id="heroEyebrow"></span>
+    <h1 class="hero-title" id="heroTitle"></h1>
+    <p class="hero-sub" id="heroSub"></p>
+    <p class="hero-meta" id="heroMeta"></p>
+  </section>
+
+  <div class="form-wrap">
+    <form id="surveyForm" novalidate>
+      <div class="loading" id="loading">⏳ 설문을 불러오는 중…</div>
+    </form>
+    <div class="done-band" id="doneBand">
+      <div class="done-icon">✦</div>
+      <h2 id="doneTitle"></h2>
+      <p id="doneText"></p>
+      <button class="btn-secondary" id="btnAgain">다른 사람도 참여하기</button>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <svg width="16" height="16" viewBox="0 0 22 22" fill="none" style="opacity:.4" aria-hidden="true">
+          <line x1="11" y1="1" x2="11" y2="21" stroke="#faf9f5" stroke-width="2" stroke-linecap="round"/>
+          <line x1="1" y1="11" x2="21" y2="11" stroke="#faf9f5" stroke-width="2" stroke-linecap="round"/>
+          <line x1="4" y1="4" x2="18" y2="18" stroke="#faf9f5" stroke-width="2" stroke-linecap="round"/>
+          <line x1="18" y1="4" x2="4" y2="18" stroke="#faf9f5" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span class="footer-name" id="footerName">인생푸드 Lab</span>
+      </div>
+      <span class="footer-copy">© 2026 인생푸드. All rights reserved.</span>
+    </div>
+  </footer>
+
+  <script>
+    const DEFAULT_EMOJIS = ["😞","😕","😐","😊","😄"];
+    let CONFIG = null;
+
+    // 한 문항을 HTML로 렌더링
+    function renderQuestion(q){
+      const req = q.required ? ' <span class="req">*</span>' : '';
+      const hint = q.hint ? `<p class="field-hint">${q.hint}</p>` : '';
+      let body = '';
+
+      if(q.type === 'text' || q.type === 'email'){
+        body = `<input type="${q.type}" id="${q.var}" placeholder="${q.placeholder||''}" />`;
+      }
+      else if(q.type === 'textarea'){
+        body = `<textarea id="${q.var}" placeholder="${q.placeholder||''}"></textarea>`;
+      }
+      else if(q.type === 'select'){
+        const opts = (q.options||[]).map(o=>`<option>${o}</option>`).join('');
+        body = `<select id="${q.var}"><option value="" disabled selected>선택해 주세요</option>${opts}</select>`;
+      }
+      else if(q.type === 'segment'){
+        body = `<div class="seg-row">` + (q.options||[]).map((o,i)=>
+          `<input type="radio" id="${q.var}_${i}" name="${q.var}" value="${o}" /><label for="${q.var}_${i}" class="seg">${o}</label>`
+        ).join('') + `</div>`;
+      }
+      else if(q.type === 'rating'){
+        const emojis = q.emojis || DEFAULT_EMOJIS;
+        const labels = q.labels || ["1","2","3","4","5"];
+        body = `<div class="rating-row">` + [1,2,3,4,5].map((v,i)=>
+          `<input type="radio" id="${q.var}_${v}" name="${q.var}" value="${v}" /><label for="${q.var}_${v}" class="r-label"><span class="emoji">${emojis[i]}</span>${labels[i]}</label>`
+        ).join('') + `</div>`;
+      }
+      else if(q.type === 'scale'){
+        const ends = q.ends || ["낮음","","높음"];
+        body = `<div class="scale-row">` + [1,2,3,4,5].map(v=>
+          `<input type="radio" id="${q.var}_${v}" name="${q.var}" value="${v}" /><label for="${q.var}_${v}" class="s-dot">${v}</label>`
+        ).join('') + `</div><div class="scale-ends"><span>${ends[0]||''}</span><span>${ends[1]||''}</span><span>${ends[2]||''}</span></div>`;
+      }
+      else if(q.type === 'nps'){
+        const ends = q.ends || ["전혀 아니다","매우 그렇다"];
+        body = `<div class="nps-row">` + Array.from({length:11},(_,v)=>
+          `<input type="radio" id="${q.var}_${v}" name="${q.var}" value="${v}" /><label for="${q.var}_${v}" class="n-num">${v}</label>`
+        ).join('') + `</div><div class="ends-2"><span>${ends[0]}</span><span>${ends[1]}</span></div>`;
+      }
+      else if(q.type === 'consent'){
+        return `<div class="form-group"><label class="consent" for="${q.var}"><input type="checkbox" id="${q.var}" /><span>${q.label}</span></label></div>`;
+      }
+
+      return `<div class="form-group"><label class="field-label" for="${q.var}">${q.label}${req}</label>${hint}${body}</div>`;
+    }
+
+    // 설정으로부터 전체 폼 구성
+    function buildForm(cfg){
+      const m = cfg.meta;
+      document.title = (m.brand||'설문') + ' · 시식 평가';
+      document.getElementById('navBrand').textContent = m.brand||'';
+      document.getElementById('navBadge').textContent = m.badge||'';
+      document.getElementById('footerName').textContent = m.brand||'';
+      document.getElementById('heroEyebrow').textContent = m.eyebrow||'';
+      document.getElementById('heroTitle').innerHTML = m.title||'';
+      document.getElementById('heroSub').textContent = m.subtitle||'';
+      document.getElementById('heroMeta').textContent = m.metaLine||'';
+      document.getElementById('doneTitle').textContent = m.doneTitle||'완료되었습니다';
+      document.getElementById('doneText').innerHTML = m.doneText||'';
+
+      const form = document.getElementById('surveyForm');
+      let html = '';
+      cfg.sections.forEach((sec, si)=>{
+        html += `<div class="form-card"><p class="section-label"><span class="num">${si+1}</span> ${sec.title}</p>`;
+        sec.questions.forEach(q=>{ html += renderQuestion(q); });
+        if(si === cfg.sections.length-1){
+          html += `<button type="submit" class="btn-primary" id="submitBtn">${m.submitText||'제출하기'}</button><div class="alert" id="alertBox"></div>`;
+        }
+        html += `</div>`;
+      });
+      form.innerHTML = html;
+    }
+
+    // 전 문항 목록 (검증·수집용)
+    function allQuestions(){ return CONFIG.sections.flatMap(s=>s.questions); }
+    const RADIO_TYPES = ['segment','rating','scale','nps'];
+    const TEXT_TYPES  = ['text','email','select','textarea'];
+
+    function updateProgress(){
+      const qs = allQuestions().filter(q=>q.required);
+      let done = 0;
+      qs.forEach(q=>{
+        if(RADIO_TYPES.includes(q.type)){ if(document.querySelector(`input[name="${q.var}"]:checked`)) done++; }
+        else if(TEXT_TYPES.includes(q.type)){ const el=document.getElementById(q.var); if(el && el.value.trim()) done++; }
+      });
+      document.getElementById('progressFill').style.width = qs.length? Math.round(done/qs.length*100)+'%' : '0';
+    }
+
+    function showError(msg){
+      const a = document.getElementById('alertBox');
+      a.textContent = msg; a.className='alert error'; a.style.display='block';
+      a.scrollIntoView({behavior:'smooth', block:'center'});
+    }
+
+    function collect(){
+      const payload = {};
+      allQuestions().forEach(q=>{
+        if(RADIO_TYPES.includes(q.type)) payload[q.var] = document.querySelector(`input[name="${q.var}"]:checked`)?.value || '';
+        else if(q.type === 'consent')   payload[q.var] = document.getElementById(q.var).checked ? '동의' : '미동의';
+        else                            payload[q.var] = (document.getElementById(q.var)?.value||'').trim();
+      });
+      return payload;
+    }
+
+    async function init(){
+      try {
+        CONFIG = await (await fetch('questions.json?_=' + Date.now())).json();
+      } catch {
+        document.getElementById('loading').textContent = '⚠️ questions.json 을 불러오지 못했습니다. 서버를 통해 접속했는지 확인하세요.';
+        return;
+      }
+      buildForm(CONFIG);
+
+      const form = document.getElementById('surveyForm');
+      form.addEventListener('input', updateProgress);
+      form.addEventListener('change', updateProgress);
+
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        document.getElementById('alertBox').style.display='none';
+
+        for(const q of allQuestions().filter(q=>q.required)){
+          const ok = RADIO_TYPES.includes(q.type)
+            ? !!document.querySelector(`input[name="${q.var}"]:checked`)
+            : !!(document.getElementById(q.var)?.value||'').trim();
+          if(!ok){ showError('필수 항목을 모두 입력·선택해 주세요.'); return; }
+        }
+
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true; submitBtn.textContent = '제출 중…';
+        try {
+          const res = await fetch('/api/submit', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(collect()) });
+          const data = await res.json();
+          if(data.success){
+            form.style.display='none';
+            document.getElementById('doneBand').style.display='block';
+            document.getElementById('progressFill').style.width='100%';
+            window.scrollTo({top:0,behavior:'smooth'});
+          } else showError(data.message);
+        } catch { showError('서버에 연결할 수 없습니다. 서버가 실행 중인지 확인하세요.'); }
+        finally { submitBtn.disabled=false; submitBtn.textContent = CONFIG.meta.submitText||'제출하기'; }
+      });
+
+      document.getElementById('btnAgain').addEventListener('click', ()=>{
+        form.reset();
+        document.getElementById('doneBand').style.display='none';
+        form.style.display='block';
+        document.getElementById('progressFill').style.width='0';
+        window.scrollTo({top:0,behavior:'smooth'});
+      });
+    }
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+{
+  "meta": {
+    "brand": "인생푸드 Lab",
+    "badge": "시식 평가",
+    "eyebrow": "신제품 시식 평가",
+    "title": "한 입의 솔직한 평가가<br>다음 메뉴를 만듭니다",
+    "subtitle": "맛·향·식감을 자유롭게 평가해 주세요. 약 3분이면 충분합니다.",
+    "metaLine": "⏱ 약 3분 · 익명 보장",
+    "sheetName": "시식평가",
+    "submitText": "평가 제출하기",
+    "doneTitle": "평가가 완료되었습니다",
+    "doneText": "소중한 한 입의 의견 감사합니다.<br>여러분의 평가로 다음 메뉴가 완성됩니다."
+  },
+  "sections": [
+    {
+      "title": "응답자 정보",
+      "questions": [
+        { "var": "name",       "header": "이름",     "label": "이름 또는 닉네임", "type": "text",    "required": true,  "placeholder": "홍길동" },
+        { "var": "age_group",  "header": "연령대",   "label": "연령대",          "type": "select",  "required": true,  "options": ["10대", "20대", "30대", "40대", "50대 이상"] },
+        { "var": "gender",     "header": "성별",     "label": "성별",            "type": "segment", "required": true,  "options": ["여성", "남성", "기타"] },
+        { "var": "visit_freq", "header": "구매빈도", "label": "평소 이런 제품을 얼마나 드시나요?", "type": "select", "required": true, "options": ["거의 처음이에요", "가끔 먹어요", "자주 즐겨요"] }
+      ]
+    },
+    {
+      "title": "맛은 어떠셨나요?",
+      "questions": [
+        { "var": "score_taste",      "header": "맛",       "label": "맛 (전체적인 맛)",    "type": "rating", "required": true },
+        { "var": "score_aroma",      "header": "향",       "label": "향 (냄새·풍미)",      "type": "rating", "required": true },
+        { "var": "score_texture",    "header": "식감",     "label": "식감 (씹는 느낌·질감)", "type": "rating", "required": true },
+        { "var": "score_appearance", "header": "외관",     "label": "외관 (보기 좋은 정도)", "type": "rating", "required": true },
+        { "var": "score_temp",       "header": "온도제공", "label": "온도·제공 상태",       "type": "rating", "required": true }
+      ]
+    },
+    {
+      "title": "간은 어땠나요?",
+      "questions": [
+        { "var": "intensity_sweet",  "header": "단맛강도",   "label": "단맛",   "type": "scale", "required": true, "ends": ["부족함", "적당함", "과함"] },
+        { "var": "intensity_salty",  "header": "짠맛강도",   "label": "짠맛",   "type": "scale", "required": true, "ends": ["부족함", "적당함", "과함"] },
+        { "var": "intensity_greasy", "header": "느끼함강도", "label": "느끼함", "type": "scale", "required": true, "ends": ["담백함", "적당함", "느끼함"] }
+      ]
+    },
+    {
+      "title": "종합 평가",
+      "questions": [
+        { "var": "score_overall", "header": "종합만족",      "label": "종합 만족도", "type": "rating", "required": true },
+        { "var": "price_fair",    "header": "적정가격",      "label": "이 가격이라면 구매하시겠어요?", "type": "select", "required": true, "hint": "정식 출시가를 정하는 데 활용됩니다.", "options": ["3,000원 이하", "3,000~5,000원", "5,000~7,000원", "7,000~10,000원", "10,000원 이상"] },
+        { "var": "repurchase",    "header": "재구매의향",    "label": "다시 구매할 의향이 있으신가요?", "type": "rating", "required": true, "emojis": ["🙅", "🤔", "😐", "🙂", "🤩"], "labels": ["없음", "글쎄", "보통", "있음", "꼭!"] },
+        { "var": "nps",           "header": "추천의향(NPS)", "label": "주변에 추천할 가능성은? (0~10)", "type": "nps", "required": true, "ends": ["전혀 아니다", "매우 그렇다"] }
+      ]
+    },
+    {
+      "title": "한마디 부탁드려요",
+      "questions": [
+        { "var": "review_oneline", "header": "한줄후기",     "label": "가장 좋았던 점을 한 문장으로!", "type": "textarea", "required": true,  "hint": "솔직한 한마디가 다른 분들께 큰 도움이 됩니다.", "placeholder": "예) 크림이 진한데 느끼하지 않아서 계속 손이 가요!" },
+        { "var": "improve",        "header": "개선의견",     "label": "아쉬웠던 점·개선 의견",        "type": "textarea", "required": false, "placeholder": "더 좋아지려면 무엇이 필요할까요? (선택)" },
+        { "var": "promo_consent",  "header": "홍보활용동의", "label": "작성한 후기를 인생푸드 홍보·마케팅에 활용하는 것에 동의합니다. (선택, 익명 처리)", "type": "consent", "required": false }
+      ]
+    }
+  ]
+}

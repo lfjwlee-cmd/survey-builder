@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>구글폼 결과 종합 정리 · 인생푸드</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    :root{
+      --primary:#cc785c; --primary-active:#a9583e; --ink:#141413; --muted:#6c6a64; --muted-soft:#8e8b82;
+      --hairline:#e6dfd8; --hairline-soft:#ebe6df; --canvas:#faf9f5; --card:#efe9de; --teal:#5db8a6;
+      --success:#5db872; --warn:#d4a017; --error:#c64545;
+      --display:"Cormorant Garamond",Georgia,serif; --body-font:"Inter",-apple-system,sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--canvas);color:var(--ink);font-family:var(--body-font);font-size:15px;line-height:1.55;}
+    .topbar{height:60px;background:var(--canvas);border-bottom:1px solid var(--hairline-soft);display:flex;align-items:center;justify-content:space-between;padding:0 24px;}
+    .brand{font-weight:500;display:flex;align-items:center;gap:8px;}
+    .btn{height:36px;padding:8px 16px;border-radius:8px;border:1px solid var(--hairline);background:var(--canvas);color:var(--ink);font-size:13px;font-weight:500;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;}
+    .btn:hover{background:var(--card);} .btn.primary{background:var(--primary);color:#fff;border-color:var(--primary);}
+    .wrap{max-width:920px;margin:0 auto;padding:32px 24px 96px;}
+    h1{font-family:var(--display);font-size:38px;font-weight:400;letter-spacing:-0.6px;margin-bottom:6px;}
+    .sub{color:var(--muted);font-size:14px;margin-bottom:28px;}
+    .drop{border:2px dashed var(--hairline);border-radius:16px;padding:56px 24px;text-align:center;background:var(--card);cursor:pointer;transition:border-color .15s,background .15s;}
+    .drop:hover,.drop.over{border-color:var(--primary);background:#f3ece2;}
+    .drop .big{font-size:46px;margin-bottom:12px;}
+    .drop h3{font-family:var(--display);font-size:24px;font-weight:500;margin-bottom:6px;}
+    .drop p{color:var(--muted);font-size:14px;}
+    .note{font-size:13px;color:var(--muted-soft);}
+    .section-title{font-size:12px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin:36px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--hairline);}
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;}
+    .kpi{background:var(--card);border-radius:12px;padding:18px 20px;}
+    .kpi .label{font-size:13px;color:var(--muted);} .kpi .value{font-family:var(--display);font-size:30px;font-weight:500;margin:4px 0 10px;}
+    .bar{height:7px;background:#fff;border-radius:99px;overflow:hidden;} .bar>i{display:block;height:100%;background:var(--primary);border-radius:99px;}
+    table{width:100%;border-collapse:collapse;font-size:14px;background:var(--card);border-radius:12px;overflow:hidden;margin-bottom:8px;}
+    th,td{padding:11px 16px;text-align:left;border-bottom:1px solid var(--hairline-soft);vertical-align:top;}
+    th{font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;}
+    tr:last-child td{border-bottom:none;}
+    .mini{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px;}
+    .col-card{background:var(--card);border-radius:12px;padding:18px 20px;margin-bottom:12px;}
+    .col-card .q{font-weight:500;font-size:15px;margin-bottom:4px;}
+    .col-card .type{font-size:12px;color:var(--muted-soft);margin-bottom:12px;}
+    .kw{display:inline-flex;gap:6px;background:#fff;border-radius:99px;padding:5px 12px;margin:0 6px 8px 0;font-size:13px;}
+    .kw b{color:var(--primary);font-weight:500;}
+    .review{background:#fff;border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:13px;line-height:1.5;}
+    .badge{display:inline-block;font-size:11px;font-weight:500;padding:2px 8px;border-radius:99px;background:var(--teal);color:#fff;margin-left:6px;}
+    .hidden{display:none;}
+    @media(max-width:600px){ h1{font-size:30px;} .wrap{padding:24px 16px 64px;} }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <span class="brand">
+      <svg width="20" height="20" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+        <line x1="11" y1="1" x2="11" y2="21" stroke="#141413" stroke-width="2" stroke-linecap="round"/>
+        <line x1="1" y1="11" x2="21" y2="11" stroke="#141413" stroke-width="2" stroke-linecap="round"/>
+        <line x1="4" y1="4" x2="18" y2="18" stroke="#141413" stroke-width="2" stroke-linecap="round"/>
+        <line x1="18" y1="4" x2="4" y2="18" stroke="#141413" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      인생푸드 Lab · 구글폼 종합 정리
+    </span>
+    <span style="display:flex;gap:8px;">
+      <button class="btn primary hidden" id="pdfBtn">📄 PDF 저장</button>
+      <a class="btn" href="/results.html">자체 설문 대시보드 →</a>
+    </span>
+  </div>
+
+  <div class="wrap">
+    <h1>구글폼 결과 종합 정리</h1>
+    <p class="sub">구글폼 → 응답 → 스프레드시트(.xlsx / .csv) 다운로드 파일을 그대로 넣으면 자동 분석됩니다.</p>
+
+    <div class="drop" id="drop">
+      <div class="big">📥</div>
+      <h3>여기에 파일을 끌어다 놓으세요</h3>
+      <p>또는 클릭해서 선택 · .xlsx / .csv 지원 · 파일은 PC 밖으로 나가지 않습니다</p>
+      <input type="file" id="file" accept=".xlsx,.xls,.csv" class="hidden" />
+    </div>
+    <p class="note" style="margin-top:12px;">💡 구글폼: 응답 탭 → 우상단 점3개(⋮) → "응답을 스프레드시트에 저장" → Sheets에서 파일 → 다운로드 → Microsoft Excel(.xlsx)</p>
+
+    <div id="report"></div>
+  </div>
+
+  <script>
+    const NUM = n => Math.round(n*10)/10;
+    const PCT = n => Math.round(n);
+    function gauge(pct){ return `<div class="bar"><i style="width:${Math.max(0,Math.min(100,pct))}%"></i></div>`; }
+
+    const drop = document.getElementById('drop');
+    const fileInput = document.getElementById('file');
+    drop.onclick = ()=>fileInput.click();
+    drop.ondragover = e=>{e.preventDefault();drop.classList.add('over');};
+    drop.ondragleave = ()=>drop.classList.remove('over');
+    drop.ondrop = e=>{e.preventDefault();drop.classList.remove('over'); if(e.dataTransfer.files[0]) handle(e.dataTransfer.files[0]);};
+    fileInput.onchange = e=>{ if(e.target.files[0]) handle(e.target.files[0]); };
+
+    function handle(file){
+      const reader = new FileReader();
+      reader.onload = ev=>{
+        const wb = XLSX.read(ev.target.result, {type:'array'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+        const headers = data[0] || [];
+        const rows = data.slice(1).filter(r=>r.some(c=>c!==''));
+        analyze(headers, rows);
+        window.scrollTo({top:400, behavior:'smooth'});
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function analyze(headers, rows){
+      const n = rows.length;
+      const cols = headers.map((h,i)=>({ name:String(h||`열${i+1}`), idx:i, vals:rows.map(r=>r[i]) }));
+
+      // 컬럼 유형 판정
+      cols.forEach(c=>{
+        const nonEmpty = c.vals.filter(v=>v!=='' && v!=null);
+        const nums = nonEmpty.map(v=>+v).filter(v=>!isNaN(v) && v!=='');
+        const uniq = [...new Set(nonEmpty.map(v=>String(v)))];
+        c.fillRate = n? nonEmpty.length/n*100 : 0;
+        if(/타임스탬프|timestamp|시간/i.test(c.name)) c.type='time';
+        else if(nums.length >= nonEmpty.length*0.8 && nonEmpty.length){ c.type='numeric'; c.nums=nums; }
+        else if(uniq.length <= Math.max(8, n*0.4)){ c.type='category'; c.uniq=uniq; }
+        else c.type='text';
+      });
+
+      const numCols = cols.filter(c=>c.type==='numeric');
+      const catCols = cols.filter(c=>c.type==='category');
+      const txtCols = cols.filter(c=>c.type==='text');
+
+      // 자동 핵심지표 추정 (키워드 매칭)
+      const find = re => numCols.find(c=>re.test(c.name));
+      const overallCol = find(/만족|종합|점수|평점|전반|overall|satisf/i) || numCols[0];
+      const npsCol = numCols.find(c=>{ const mn=Math.min(...c.nums),mx=Math.max(...c.nums); return /추천|nps|recommend/i.test(c.name) || (mn>=0&&mx<=10&&mx>5); });
+
+      const stat = c=>{ const v=c.nums; const m=v.reduce((a,b)=>a+b,0)/v.length; const sd=Math.sqrt(v.reduce((a,b)=>a+(b-m)**2,0)/v.length); return {m,sd,min:Math.min(...v),max:Math.max(...v)}; };
+
+      let kpiHtml='';
+      if(overallCol){ const s=stat(overallCol); const scale=s.max<=5?5:(s.max<=10?10:s.max);
+        kpiHtml += `<div class="kpi"><div class="label">${overallCol.name}</div><div class="value">${NUM(s.m)}<span style="font-size:16px"> / ${scale}</span></div>${gauge(s.m/scale*100)}</div>`; }
+      if(npsCol){ const v=npsCol.nums; const p=v.filter(x=>x>=9).length, d=v.filter(x=>x<=6).length;
+        const nps=Math.round((p-d)/v.length*100);
+        kpiHtml += `<div class="kpi"><div class="label">추천 NPS · ${npsCol.name.slice(0,14)}</div><div class="value">${nps>0?'+':''}${nps}</div>${gauge((nps+100)/2)}</div>`; }
+      kpiHtml += `<div class="kpi"><div class="label">총 응답 수</div><div class="value">${n}<span style="font-size:16px">명</span></div>${gauge(100)}</div>`;
+      kpiHtml += `<div class="kpi"><div class="label">수집 항목 수</div><div class="value">${cols.length-cols.filter(c=>c.type==='time').length}<span style="font-size:16px">개</span></div>${gauge(100)}</div>`;
+
+      // 숫자형 항목 테이블
+      const numTable = numCols.length ? `
+        <div class="section-title">📊 점수형 항목</div>
+        <table><thead><tr><th>항목</th><th>평균</th><th style="width:35%">분포</th><th>최저~최고</th><th>편차</th></tr></thead><tbody>
+        ${numCols.map(c=>{const s=stat(c);const scale=s.max<=5?5:(s.max<=10?10:s.max);const hl=s.sd>=(scale===5?1.2:2.2);
+          return `<tr><td>${c.name}</td><td class="mini">${NUM(s.m)}</td><td>${gauge(s.m/scale*100)}</td><td class="mini">${NUM(s.min)}~${NUM(s.max)}</td><td class="mini">${NUM(s.sd)}${hl?' ⚠️':''}</td></tr>`;
+        }).join('')}
+        </tbody></table>
+        <p class="note">⚠️ = 표준편차 높음(호불호 갈림). 평균만 믿지 말고 분포 확인 필요.</p>` : '';
+
+      // 범주형 항목
+      const catHtml = catCols.length ? `
+        <div class="section-title">🗂️ 선택형 항목</div>
+        ${catCols.map(c=>{
+          const dist={}; c.vals.forEach(v=>{ const k=v===''?'(미응답)':String(v); dist[k]=(dist[k]||0)+1; });
+          const sorted=Object.entries(dist).sort((a,b)=>b[1]-a[1]);
+          return `<div class="col-card"><div class="q">${c.name}</div><div class="type">선택형 · 응답률 ${PCT(c.fillRate)}%</div>
+            <table style="background:transparent;"><tbody>${sorted.map(([k,v])=>`<tr><td style="padding:6px 0;">${k}</td><td class="mini" style="padding:6px 0;width:60px;">${v}명</td><td style="padding:6px 0;width:45%;">${gauge(v/n*100)}</td></tr>`).join('')}</tbody></table></div>`;
+        }).join('')}` : '';
+
+      // 주관식
+      const stop=new Set(['그리고','너무','정말','조금','약간','그냥','좀','수','것','거','게','해서','있어요','같아요','없어요','해요','네요']);
+      const txtHtml = txtCols.length ? `
+        <div class="section-title">💬 주관식 응답</div>
+        ${txtCols.map(c=>{
+          const ans=c.vals.filter(v=>v!=='').map(String);
+          const freq={}; ans.forEach(t=>t.split(/[\s,.!?·~"'()]+/).forEach(w=>{w=w.trim();if(w.length>=2&&!stop.has(w))freq[w]=(freq[w]||0)+1;}));
+          const kw=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,8);
+          return `<div class="col-card"><div class="q">${c.name}<span class="badge">${ans.length}건</span></div>
+            <div class="type">키워드 빈도</div>
+            <div style="margin-bottom:12px;">${kw.length?kw.map(([w,v])=>`<span class="kw">${w} <b>${v}</b></span>`).join(''):'<span class="note">키워드 없음</span>'}</div>
+            ${ans.slice(0,5).map(t=>`<div class="review">"${t}"</div>`).join('')}
+            ${ans.length>5?`<p class="note">외 ${ans.length-5}건…</p>`:''}</div>`;
+        }).join('')}` : '';
+
+      const reliability = n<10 ? '⚠️ 표본 부족(n&lt;10) — 참고용 수치입니다.' : `표본 ${n}명 — 통계적으로 활용 가능.`;
+
+      document.getElementById('report').innerHTML = `
+        <div class="section-title">📌 핵심 KPI ${overallCol?'':'<span class="note">(점수 항목 자동 추정)</span>'}</div>
+        <div class="kpi-grid">${kpiHtml}</div>
+        ${numTable}${catHtml}${txtHtml}
+        <div class="section-title">📎 신뢰도</div>
+        <p class="note">${reliability} · 점수형 ${numCols.length}개 · 선택형 ${catCols.length}개 · 주관식 ${txtCols.length}개로 자동 분류됨.</p>
+      `;
+      document.getElementById('pdfBtn').classList.remove('hidden');
+    }
+
+    // PDF 저장 (인쇄 아님 — 파일로 직접 저장)
+    async function savePDF(el, filename){
+      const btn = document.getElementById('pdfBtn');
+      const old = btn.textContent; btn.textContent = '생성 중…'; btn.disabled = true;
+      try {
+        const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#faf9f5', useCORS: true });
+        const img = canvas.toDataURL('image/jpeg', 0.95);
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pw = pdf.internal.pageSize.getWidth();
+        const ph = pdf.internal.pageSize.getHeight();
+        const imgH = canvas.height * pw / canvas.width;
+        let left = imgH, pos = 0;
+        pdf.addImage(img, 'JPEG', 0, pos, pw, imgH);
+        left -= ph;
+        while (left > 0) { pos = left - imgH; pdf.addPage(); pdf.addImage(img, 'JPEG', 0, pos, pw, imgH); left -= ph; }
+        pdf.save(filename);
+      } catch(e){ alert('PDF 생성 중 오류가 발생했습니다: ' + e.message); }
+      finally { btn.textContent = old; btn.disabled = false; }
+    }
+    document.getElementById('pdfBtn').onclick = ()=>{
+      const d = new Date();
+      const stamp = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+      savePDF(document.getElementById('report'), `구글폼종합정리_${stamp}.pdf`);
+    };
+  </script>
+</body>
+</html>
