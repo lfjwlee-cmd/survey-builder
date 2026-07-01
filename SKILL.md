@@ -65,7 +65,13 @@ Copy from this skill's `assets/` into the new project:
 - `assets/editor.html`    → `<project>/public/editor.html`
 - `assets/results.html`   → `<project>/public/results.html`
 - `assets/import.html`    → `<project>/public/import.html`
+- `assets/qr.html`        → `<project>/public/qr.html`  (paste-a-URL → QR generator, for public deploy)
 - `assets/questions.json` → `<project>/public/questions.json`  (you will overwrite this next)
+
+Also prepare the public-deploy bundle so the survey can go live on any network from the start:
+- Copy `assets/apps-script/Form.html` → `<project>/apps-script/Form.html` (verbatim)
+- Copy `assets/apps-script/Code.gs` → `<project>/apps-script/Code.gs`, then replace its `CONFIG = {...}`
+  object with the SAME questions.json content you wrote (so the deployed survey matches the local one).
 
 These files are complete and tested — copy them verbatim, do NOT rewrite them. The only file
 you customize is `questions.json`.
@@ -110,6 +116,21 @@ Then:
 - **Google Forms summary**: if they ran the survey on Google Forms instead, open `import.html`
   and drag the exported spreadsheet in — it auto-classifies every column and produces the
   same kind of summary + PDF, fully in the browser (no server needed).
+
+### 6b. Editing the survey later — tell them clearly WHERE, per version
+There can be two running copies, and they edit in different places:
+- **Local copy** (localhost, same-WiFi): edit `public/questions.json` directly or via `editor.html`
+  (dashboard → ✏️ 항목편집), then restart `node server.js`.
+- **Public copy** (deployed Apps Script, any network): edit the `CONFIG` object at the top of `Code.gs`
+  inside the Apps Script editor → save → **배포 → 배포 관리 → 연필 → 새 버전 → 배포** (same URL kept).
+  For big changes, regenerate `Code.gs` from the updated questions.json and re-paste.
+Keep them in sync if both are in use. The `apps-script/Code.gs` in the project is the source to copy from.
+
+### 6c. Where results live — tell them clearly, per version
+- **Public (Apps Script)** responses append to the bound **Google Sheet** (tab = `meta.sheetName`).
+  View live in the Sheet; for the visual dashboard, `파일 → 다운로드 → Excel` then drag into `import.html`.
+- **Local** responses go to `survey_results.xlsx`; view the live dashboard at `results.html` (KPIs, vote
+  tallies, PDF/Excel/Word export).
 
 ### 7. Point them to editing
 Changing the survey later = editing `public/questions.json` only, then restarting the server.

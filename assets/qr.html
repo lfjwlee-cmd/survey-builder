@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>설문 QR 만들기</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#faf9f5;font-family:'Inter','Malgun Gothic',sans-serif;color:#141413;}
+    .card{text-align:center;padding:40px;max-width:420px;width:100%;}
+    .eyebrow{font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#cc785c;font-weight:600;margin-bottom:10px;}
+    h1{font-size:24px;margin:0 0 6px;font-weight:600;}
+    p{color:#6c6a64;font-size:14px;margin:0 0 20px;line-height:1.5;}
+    input{width:100%;height:42px;padding:10px 14px;border:1px solid #e6dfd8;border-radius:10px;font-size:13px;margin-bottom:12px;font-family:inherit;box-sizing:border-box;}
+    button{height:42px;padding:10px 24px;background:#cc785c;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;}
+    button:hover{background:#a9583e;}
+    #qr{display:inline-flex;padding:20px;background:#fff;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.08);margin-top:24px;}
+    #qr:empty{display:none;}
+    .hint{margin-top:16px;font-size:13px;color:#3d3d3a;background:#efe9de;border-radius:10px;padding:12px 16px;}
+    @media print{ input,button,.hint,.eyebrow{display:none;} body{background:#fff;} #qr{box-shadow:none;} }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="eyebrow">설문 QR 만들기</div>
+    <h1>📱 공개 주소로 QR 생성</h1>
+    <p>구글 Apps Script 배포 주소(<b>…/exec</b>)를 붙여넣고 만들기를 누르세요.<br>이 QR은 WiFi 없이 LTE에서도 열립니다.</p>
+    <input type="text" id="url" placeholder="https://script.google.com/macros/s/..../exec" />
+    <button id="make">QR 만들기</button>
+    <div id="qr"></div>
+    <div class="hint" id="hint" style="display:none;">폰 카메라로 QR을 비추면 설문이 열립니다. 이 화면을 인쇄하거나 QR을 캡처해 매장에 비치하세요.</div>
+  </div>
+  <script>
+    function gen(){
+      var url=document.getElementById('url').value.trim();
+      var box=document.getElementById('qr'); box.innerHTML='';
+      if(!url){ return; }
+      if(/localhost|127\.0\.0\.1/.test(url)){ box.innerHTML='<p style="color:#c64545;margin:0">localhost 주소는 폰에서 안 열립니다. 공개(…/exec) 주소를 넣어주세요.</p>'; return; }
+      new QRCode(box,{text:url,width:300,height:300,colorDark:'#141413',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+      document.getElementById('hint').style.display='block';
+    }
+    document.getElementById('make').onclick=gen;
+    // ?url= 로 열면 자동 생성
+    var q=new URLSearchParams(location.search).get('url');
+    if(q){ document.getElementById('url').value=q; gen(); }
+  </script>
+</body>
+</html>
