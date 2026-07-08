@@ -5,7 +5,12 @@
  *
  * ▶ 아래 CONFIG 를 본인 설문의 questions.json 내용으로 통째로 교체하세요.
  * ▶ 붙여넣은 뒤 반드시: 편집기에서 setup 함수를 1회 실행(▷Run) → 권한 승인 → 실행로그의 시트 주소 확인.
+ *
+ * ▷ 설문 주소:  .../exec
+ * ▷ 결과 대시보드:  .../exec?page=results&key=(아래 RESULTS_KEY 값)   ← 사장/본부만 아는 주소
  */
+const RESULTS_KEY = 'insaeng2026';  // 결과 페이지 비밀키 — 원하는 값으로 바꾸세요 (손님에겐 알리지 않음)
+
 const CONFIG = {
   "meta": {
     "brand": "인생푸드 Lab", "badge": "설문", "eyebrow": "설문조사",
@@ -20,14 +25,38 @@ const CONFIG = {
   ]
 };
 
-// ── 설문 화면 제공 ──
-function doGet() {
+// ── 설문 화면 / 결과 대시보드 제공 ──
+function doGet(e) {
+  const p = (e && e.parameter) || {};
+  // 결과 대시보드: ?page=results&key=... (비밀키 일치해야 열림)
+  if (p.page === 'results') {
+    if (p.key !== RESULTS_KEY) {
+      return HtmlService.createHtmlOutput('<div style="font-family:sans-serif;padding:40px;text-align:center;color:#c64545">🔒 접근 권한이 없습니다. (비밀키 필요)</div>');
+    }
+    const t = HtmlService.createTemplateFromFile('Results');
+    t.config = JSON.stringify(CONFIG);
+    let url = '';
+    try { url = getSheet_().getParent().getUrl(); } catch (err) {}
+    t.sheetUrl = url;
+    return t.evaluate().setTitle((CONFIG.meta.brand || '설문') + ' 결과')
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
+  // 설문 화면 (기본)
   const t = HtmlService.createTemplateFromFile('Form');
   t.config = JSON.stringify(CONFIG);
   const title = (CONFIG.meta.title || '설문').replace(/<br\s*\/?>/gi, ' ');
   return t.evaluate().setTitle(title)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+// 결과 데이터 반환 (Results.html 대시보드에서 google.script.run 로 호출)
+function getResults() {
+  const sh = getSheet_();
+  const values = sh.getDataRange().getValues();
+  const rows = values.length > 1 ? values.slice(1).map(r => r.map(c => c == null ? '' : String(c))) : [];
+  return { fields: fields_(), rows: rows };
 }
 
 // 변수명 ↔ 헤더 (제출시간이 항상 첫 열)

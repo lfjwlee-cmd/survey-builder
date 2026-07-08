@@ -29,10 +29,14 @@
 - 그 URL로 QR을 만들면 됨. 우리 `results.html`의 QR 칸에 이 URL을 붙여 넣어 생성하거나,
   아무 QR 생성 사이트 사용. → 이제 **LTE·어떤 망에서도** 폰으로 열린다.
 
-## 결과 보기
-- 응답은 구글시트에 실시간으로 쌓인다(구글 어디서든 확인).
-- 우리 대시보드처럼 보고 싶으면: 구글시트 `파일 → 다운로드 → Excel(.xlsx)` →
-  로컬 `import.html`에 드래그&드롭 → KPI·투표 집계·키워드까지 정리.
+## 결과 보기 (같은 웹앱 안의 대시보드)
+- 결과 대시보드 = 설문주소 뒤에 `?page=results&key=<RESULTS_KEY>` 를 붙인 주소.
+  - 예) `https://script.google.com/macros/s/.../exec?page=results&key=insaeng2026`
+  - 출시판정·KPI·관능·강도·세그먼트·🗳️투표 🏆최다·키워드·홍보후기·개별응답표 자동 집계(실시간),
+    상단에서 PDF/워드/엑셀 저장 + 원본 시트 바로가기.
+  - `RESULTS_KEY`(Code.gs 상단)로 접근 보호 — 손님에겐 설문 주소만, 결과 주소는 사장/본부만.
+- (대안) 구글시트 `파일 → 다운로드 → Excel` → 로컬 `import.html` 드래그로도 정리 가능.
+- 필수 파일: Apps Script에 `Code.gs` + `Form`(HTML) + `Results`(HTML) 3개.
 
 ## 설문 내용을 바꾸려면
 - Apps Script 편집기에서 `Code.gs`의 `CONFIG`를 수정 → 저장 → **배포 → 배포 관리 → 편집(연필) →

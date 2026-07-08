@@ -70,8 +70,14 @@ Copy from this skill's `assets/` into the new project:
 
 Also prepare the public-deploy bundle so the survey can go live on any network from the start:
 - Copy `assets/apps-script/Form.html` → `<project>/apps-script/Form.html` (verbatim)
+- Copy `assets/apps-script/Results.html` → `<project>/apps-script/Results.html` (verbatim — the live
+  results dashboard served by the same web app)
 - Copy `assets/apps-script/Code.gs` → `<project>/apps-script/Code.gs`, then replace its `CONFIG = {...}`
   object with the SAME questions.json content you wrote (so the deployed survey matches the local one).
+The Apps Script web app serves BOTH the survey (`.../exec`) and a live dashboard
+(`.../exec?page=results&key=<RESULTS_KEY>`) that reads the auto-created Google Sheet — same design as
+results.html (verdict, KPIs, vote 🏆 tallies, NPS, keywords, PDF/Word/Excel). No Google Forms, no
+import step. `RESULTS_KEY` (top of Code.gs) gate-keeps the results URL so customers only see the survey.
 
 These files are complete and tested — copy them verbatim, do NOT rewrite them. The only file
 you customize is `questions.json`.

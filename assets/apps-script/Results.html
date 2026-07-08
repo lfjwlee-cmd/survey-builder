@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <base target="_top" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root{
+      --primary:#cc785c;--primary-active:#a9583e;--ink:#141413;--body:#3d3d3a;--muted:#6c6a64;--muted-soft:#8e8b82;
+      --hairline:#e6dfd8;--hairline-soft:#ebe6df;--canvas:#faf9f5;--card:#efe9de;--teal:#5db8a6;--success:#5db872;--warn:#d4a017;--error:#c64545;
+      --display:"Cormorant Garamond",Georgia,serif;--body-font:"Inter","Malgun Gothic",sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--canvas);color:var(--ink);font-family:var(--body-font);font-size:15px;line-height:1.55;}
+    .topbar{min-height:60px;background:var(--canvas);border-bottom:1px solid var(--hairline-soft);display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 20px;position:sticky;top:0;z-index:10;flex-wrap:wrap;}
+    .brand{font-weight:500;display:flex;align-items:center;gap:8px;}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;}
+    .btn{height:36px;padding:8px 14px;border-radius:8px;border:1px solid var(--hairline);background:var(--canvas);color:var(--ink);font-family:var(--body-font);font-size:13px;font-weight:500;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;}
+    .btn:hover{background:var(--card);}
+    .wrap{max-width:920px;margin:0 auto;padding:28px 20px 80px;}
+    h1{font-family:var(--display);font-size:34px;font-weight:400;letter-spacing:-0.5px;margin-bottom:6px;}
+    .sub{color:var(--muted);font-size:14px;margin-bottom:24px;}
+    .section-title{font-size:12px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--hairline);}
+    .verdict{border-radius:12px;padding:26px 30px;margin-bottom:8px;color:#fff;}
+    .verdict.go{background:var(--success);}.verdict.hold{background:var(--warn);}.verdict.stop{background:var(--error);}
+    .verdict .v-tag{font-size:13px;font-weight:500;letter-spacing:1px;text-transform:uppercase;opacity:.9;}
+    .verdict .v-title{font-family:var(--display);font-size:28px;font-weight:500;margin:4px 0 8px;}
+    .verdict .v-desc{font-size:14px;opacity:.92;line-height:1.6;}
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;}
+    .kpi{background:var(--card);border-radius:12px;padding:16px 18px;}
+    .kpi .label{font-size:13px;color:var(--muted);}
+    .kpi .value{font-family:var(--display);font-size:30px;font-weight:500;line-height:1.1;margin:4px 0 10px;}
+    .kpi .value .sig{font-size:16px;}
+    .bar{height:7px;background:#fff;border-radius:99px;overflow:hidden;}.bar>i{display:block;height:100%;background:var(--primary);border-radius:99px;}
+    .bar.teal>i{background:var(--teal);}
+    table{width:100%;border-collapse:collapse;font-size:14px;background:var(--card);border-radius:12px;overflow:hidden;}
+    th,td{padding:11px 15px;text-align:left;border-bottom:1px solid var(--hairline-soft);}
+    th{font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;}
+    tr:last-child td{border-bottom:none;}
+    .mini{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px;}
+    .review{background:var(--card);border-radius:12px;padding:14px 16px;margin-bottom:10px;font-size:14px;line-height:1.6;}
+    .review .meta{font-size:12px;color:var(--muted-soft);margin-top:6px;}
+    .kw{display:inline-flex;gap:6px;background:var(--card);border-radius:99px;padding:5px 12px;margin:0 6px 8px 0;font-size:13px;}
+    .kw b{color:var(--primary);font-weight:500;}
+    .note{font-size:13px;color:var(--muted-soft);margin-top:8px;}
+    .empty{text-align:center;padding:60px 24px;color:var(--muted);}.empty .big{font-size:40px;margin-bottom:12px;}
+    .table-scroll{overflow-x:auto;border-radius:12px;-webkit-overflow-scrolling:touch;}
+    .rawtable{min-width:max-content;}.rawtable th,.rawtable td{white-space:nowrap;}
+    .rawtable td:first-child,.rawtable th:first-child{position:sticky;left:0;background:var(--card);}
+    @media(max-width:600px){h1{font-size:26px;}.wrap{padding:20px 14px 64px;}th,td{padding:10px;}.kpi-grid{grid-template-columns:1fr 1fr;}.kpi .value{font-size:24px;}.verdict{padding:20px;}.verdict .v-title{font-size:22px;}}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <span class="brand">📊 <span id="brandName">결과 대시보드</span></span>
+    <div class="actions">
+      <button class="btn" id="xlsBtn">📗 엑셀</button>
+      <button class="btn" id="pdfBtn">📄 PDF</button>
+      <button class="btn" id="wordBtn">📘 워드</button>
+      <button class="btn" id="refreshBtn">↻ 새로고침</button>
+      <a class="btn" id="sheetLink" target="_blank" style="display:none">📋 원본 시트</a>
+    </div>
+  </div>
+  <div class="wrap" id="root"><div class="empty"><div class="big">⏳</div>결과를 불러오는 중…</div></div>
+
+  <script>
+    const CONFIG = <?!= config ?>;
+    const SHEET_URL = "<?= sheetUrl ?>";
+    const NUM=n=>Math.round(n*10)/10, PCT=n=>Math.round(n);
+    function gauge(p,t){return `<div class="bar${t?' teal':''}"><i style="width:${Math.max(0,Math.min(100,p))}%"></i></div>`;}
+    function sig(ok,mid){return ok?'🟢':(mid?'🟡':'🔴');}
+
+    const qmap={}; CONFIG.sections.forEach(s=>(s.questions||[]).forEach(q=>qmap[q.var]=q));
+    document.getElementById('brandName').textContent=(CONFIG.meta.brand||'')+' 결과';
+    if(SHEET_URL){ var sl=document.getElementById('sheetLink'); sl.href=SHEET_URL; sl.style.display='inline-flex'; }
+
+    function render(data){
+      const fields=data.fields, keys=fields.map(f=>f[0]), colHeaders=fields.map(f=>f[1]);
+      const recs=(data.rows||[]).filter(r=>r.some(c=>c!==''&&c!=null)).map(r=>Object.fromEntries(keys.map((k,i)=>[k,r[i]])));
+      const n=recs.length;
+      if(!n){ document.getElementById('root').innerHTML='<div class="empty"><div class="big">📭</div>아직 제출된 응답이 없습니다.<br><span class="note">QR로 설문을 배포하고 응답이 쌓이면 여기 자동 집계됩니다.</span></div>'; return; }
+
+      const avg=k=>{const v=recs.map(r=>+r[k]).filter(x=>!isNaN(x));return v.length?v.reduce((a,b)=>a+b,0)/v.length:0;};
+      const std=k=>{const v=recs.map(r=>+r[k]).filter(x=>!isNaN(x));if(v.length<2)return 0;const m=v.reduce((a,b)=>a+b,0)/v.length;return Math.sqrt(v.reduce((a,b)=>a+(b-m)**2,0)/v.length);};
+      const present=k=>keys.includes(k)&&recs.some(r=>r[k]!==''&&r[k]!=null);
+      const labelOf=k=>(qmap[k]&&qmap[k].label)||colHeaders[keys.indexOf(k)]||k;
+
+      const sensoryKeys=keys.filter(k=>k.startsWith('score_')&&k!=='score_overall'&&present(k));
+      const intensityKeys=keys.filter(k=>k.startsWith('intensity_')&&present(k));
+      const voteKeys=keys.filter(k=>qmap[k]&&(qmap[k].type==='select'||qmap[k].type==='segment')&&present(k));
+      const hasOverall=present('score_overall'),hasRep=present('repurchase'),hasNps=present('nps');
+      const hasReview=present('review_oneline')||present('improve');
+
+      const overall=avg('score_overall');
+      const repRate=recs.filter(r=>+r.repurchase>=4).length/n*100;
+      const npsV=recs.map(r=>+r.nps).filter(x=>!isNaN(x));
+      const promoters=npsV.filter(x=>x>=9).length, detractors=npsV.filter(x=>x<=6).length;
+      const nps=npsV.length?Math.round((promoters-detractors)/npsV.length*100):0;
+
+      let verdictHtml='';
+      if(hasOverall){
+        let vC='stop',vT='보류',vTi='🔴 출시 보류',vD='핵심 지표가 기준에 미달합니다. 보완 후 재평가가 필요합니다.';
+        if(overall>=4&&(!hasRep||repRate>=70)&&(!hasNps||nps>0)){vC='go';vT='출시 권장';vTi='🟢 출시 권장';vD='주요 지표가 기준을 통과했습니다. 출시를 진행해도 좋습니다.';}
+        else if(overall>=3.5){vC='hold';vT='보완 후 재검토';vTi='🟡 보완 후 재검토';vD='가능성은 있으나 일부 지표가 기준에 못 미칩니다.';}
+        verdictHtml=`<div class="verdict ${vC}"><div class="v-tag">${vT}</div><div class="v-title">${vTi}</div><div class="v-desc">${vD}</div></div><p class="note">판정 기준: 종합 4.0↑ · 재구매 70%↑ · NPS 양수 → 🟢</p>`;
+      }
+
+      const kpis=[];
+      if(hasOverall)kpis.push(`<div class="kpi"><div class="label">종합 만족도 ${sig(overall>=4,overall>=3.5)}</div><div class="value">${NUM(overall)}<span class="sig"> / 5</span></div>${gauge(overall/5*100)}</div>`);
+      if(hasRep)kpis.push(`<div class="kpi"><div class="label">재구매 의향 ${sig(repRate>=70,repRate>=50)}</div><div class="value">${PCT(repRate)}<span class="sig">%</span></div>${gauge(repRate)}</div>`);
+      if(hasNps)kpis.push(`<div class="kpi"><div class="label">추천 NPS ${sig(nps>0,nps>=-10)}</div><div class="value">${nps>0?'+':''}${nps}</div>${gauge((nps+100)/2)}</div>`);
+      kpis.push(`<div class="kpi"><div class="label">총 응답 수</div><div class="value">${n}<span class="sig">명</span></div>${gauge(100)}</div>`);
+
+      const sensoryHtml=sensoryKeys.length?`<div class="section-title">🧪 점수 평가 (5점)</div><div class="table-scroll"><table><thead><tr><th>항목</th><th>점수</th><th style="width:40%">분포</th><th>신호</th></tr></thead><tbody>${sensoryKeys.map(k=>{const a=avg(k);return `<tr><td>${labelOf(k)}</td><td class="mini">${NUM(a)}</td><td>${gauge(a/5*100)}</td><td>${sig(a>=4,a>=3.3)}</td></tr>`;}).join('')}${hasOverall?`<tr><td>종합 만족</td><td class="mini">${NUM(overall)}</td><td>${gauge(overall/5*100)}</td><td>${sig(overall>=4,overall>=3.5)}</td></tr>`:''}</tbody></table></div>`:'';
+
+      const intenHtml=intensityKeys.length?`<div class="section-title">⚖️ 강도 진단 (1 부족 ↔ 3 적정 ↔ 5 과함)</div><div class="table-scroll"><table><thead><tr><th>항목</th><th>평균</th><th style="width:40%">강도</th><th>진단</th></tr></thead><tbody>${intensityKeys.map(k=>{const a=avg(k);const d=a>3.6?'과함 ▲':a<2.4?'부족 ▼':'적정 ●';return `<tr><td>${labelOf(k)}</td><td class="mini">${NUM(a)}</td><td>${gauge(a/5*100,true)}</td><td class="mini">${d}</td></tr>`;}).join('')}</tbody></table></div>`:'';
+
+      let segHtml='';
+      if(hasOverall){
+        const segMap={};recs.forEach(r=>{const key=`${r.age_group||'-'} ${r.gender||'-'}`;(segMap[key]=segMap[key]||[]).push(r);});
+        const segRows=Object.entries(segMap).map(([k,arr])=>({k,n:arr.length,o:arr.reduce((a,r)=>a+(+r.score_overall||0),0)/arr.length,rp:arr.filter(r=>+r.repurchase>=4).length/arr.length*100})).sort((a,b)=>b.o-a.o);
+        segHtml=`<div class="section-title">👥 세그먼트 교차분석 (연령 × 성별)</div><div class="table-scroll"><table><thead><tr><th>세그먼트</th><th>n</th><th>종합</th><th>재구매</th><th>신호</th></tr></thead><tbody>${segRows.map(s=>`<tr><td>${s.k}</td><td class="mini">${s.n}</td><td class="mini">${NUM(s.o)}</td><td class="mini">${PCT(s.rp)}%</td><td>${sig(s.o>=4,s.o>=3.5)}</td></tr>`).join('')}</tbody></table></div>`;
+      }
+
+      const voteHtml=voteKeys.map(k=>{const dist={};recs.forEach(r=>{const v=(r[k]??'')===''?'(미응답)':String(r[k]);dist[v]=(dist[v]||0)+1;});const sorted=Object.entries(dist).sort((a,b)=>b[1]-a[1]);const win=sorted.length?sorted[0][0]:'';return `<div class="section-title">🗳️ ${labelOf(k)}</div><div class="table-scroll"><table><thead><tr><th>선택지</th><th>표수</th><th style="width:45%">비율</th><th>최다</th></tr></thead><tbody>${sorted.map(([o,c])=>`<tr><td>${o}</td><td class="mini">${c}표 (${PCT(c/n*100)}%)</td><td>${gauge(c/n*100)}</td><td>${o===win?'🏆':''}</td></tr>`).join('')}</tbody></table></div>`;}).join('');
+
+      let reviewHtml='';
+      if(hasReview){
+        const stop=new Set(['그리고','너무','정말','조금','약간','그냥','좀','수','것','거','게','해서','있어요','같아요','없어요','해요','네요','아요','어요']);
+        const freq={};recs.forEach(r=>{[r.review_oneline,r.improve].forEach(t=>{if(!t)return;String(t).split(/[\s,.!?·~"'()]+/).forEach(w=>{w=w.trim();if(w.length>=2&&!stop.has(w))freq[w]=(freq[w]||0)+1;});});});
+        const topKw=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,10);
+        const promo=recs.filter(r=>r.promo_consent==='동의'&&+r.nps>=9&&r.review_oneline).map(r=>({txt:r.review_oneline,meta:`${r.age_group||''} ${r.gender||''} · NPS ${r.nps}`}));
+        reviewHtml=`<div class="section-title">💬 키워드 빈도</div><div>${topKw.length?topKw.map(([w,c])=>`<span class="kw">${w} <b>${c}</b></span>`).join(''):'<span class="note">키워드 없음</span>'}</div>${(hasNps&&present('promo_consent'))?`<div class="section-title">📣 홍보 활용 가능 후기 (동의 + NPS 추천군)</div>${promo.length?promo.map(p=>`<div class="review">"${p.txt}"<div class="meta">— ${p.meta}</div></div>`).join(''):'<p class="note">아직 홍보 활용 동의 + 고추천 후기가 없습니다.</p>'}`:''}`;
+      }
+
+      const reliability=n<10?'⚠️ 표본 부족(n&lt;10) — 참고용 수치입니다.':`표본 ${n}명 — 통계적으로 활용 가능.`;
+      const highStd=sensoryKeys.filter(k=>std(k)>=1.2).map(k=>labelOf(k));
+
+      document.getElementById('root').innerHTML=`
+        <h1>${CONFIG.meta.brand||''} 설문 결과</h1>
+        <p class="sub">응답자 n = ${n}명 · 실시간 자동 집계</p>
+        ${verdictHtml}
+        <div class="section-title">📌 핵심 KPI</div><div class="kpi-grid">${kpis.join('')}</div>
+        ${sensoryHtml}${intenHtml}${segHtml}${voteHtml}${reviewHtml}
+        <div class="section-title">🗳️ 개별 응답 (누가·언제·무엇을)</div>
+        <div class="table-scroll"><table class="rawtable"><thead><tr>${colHeaders.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${recs.map(r=>`<tr>${keys.map(k=>`<td class="mini">${(r[k]??'')===''?'-':r[k]}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+        <div class="section-title">📎 신뢰도</div><p class="note">${reliability}${highStd.length?` · 호불호가 갈린 항목: ${highStd.join(', ')} (표준편차 높음)`:''}</p>`;
+      window._recs=recs; window._keys=keys; window._headers=colHeaders;
+    }
+
+    function load(){
+      google.script.run.withSuccessHandler(render).withFailureHandler(function(e){
+        document.getElementById('root').innerHTML='<div class="empty"><div class="big">⚠️</div>결과를 불러오지 못했습니다.<br><span class="note">'+(e&&e.message||'')+'</span></div>';
+      }).getResults();
+    }
+    document.getElementById('refreshBtn').onclick=load;
+
+    const stamp=()=>{const d=new Date();return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;};
+    document.getElementById('pdfBtn').onclick=async()=>{
+      const btn=document.getElementById('pdfBtn'),o=btn.textContent;btn.textContent='생성 중…';btn.disabled=true;
+      try{const cv=await html2canvas(document.getElementById('root'),{scale:2,backgroundColor:'#faf9f5'});const img=cv.toDataURL('image/jpeg',0.95);const{jsPDF}=window.jspdf;const pdf=new jsPDF('p','mm','a4');const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();const ih=cv.height*pw/cv.width;let left=ih,pos=0;pdf.addImage(img,'JPEG',0,pos,pw,ih);left-=ph;while(left>0){pos=left-ih;pdf.addPage();pdf.addImage(img,'JPEG',0,pos,pw,ih);left-=ph;}pdf.save('설문결과_'+stamp()+'.pdf');}catch(e){alert('PDF 오류: '+e.message);}finally{btn.textContent=o;btn.disabled=false;}
+    };
+    document.getElementById('wordBtn').onclick=()=>{
+      const html='<!DOCTYPE html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>body{font-family:"Malgun Gothic",sans-serif;}h1{font-size:22pt;}.section-title{font-size:11pt;color:#666;font-weight:bold;margin:16pt 0 6pt;border-bottom:1px solid #ccc;}table{border-collapse:collapse;width:100%;font-size:10pt;}th,td{border:1px solid #ddd;padding:5pt 8pt;}.bar{display:none;}.verdict{padding:12pt;color:#fff;font-weight:bold;}.verdict.go{background:#5db872;}.verdict.hold{background:#d4a017;}.verdict.stop{background:#c64545;}.kpi{display:inline-block;border:1px solid #ddd;padding:8pt 12pt;margin:3pt;}.kpi .value{font-size:18pt;font-weight:bold;}.review{border:1px solid #ddd;padding:6pt;margin:4pt 0;}.kw{display:inline-block;border:1px solid #ddd;padding:2pt 8pt;margin:2pt;}</style></head><body>'+document.getElementById('root').innerHTML+'</body></html>';
+      const blob=new Blob(['﻿',html],{type:'application/msword'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='설문결과_'+stamp()+'.doc';a.click();
+    };
+    document.getElementById('xlsBtn').onclick=()=>{
+      if(!window._recs){return;}
+      const aoa=[window._headers].concat(window._recs.map(r=>window._keys.map(k=>r[k]??'')));
+      const ws=XLSX.utils.aoa_to_sheet(aoa);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'응답');XLSX.writeFile(wb,'설문결과_'+stamp()+'.xlsx');
+    };
+
+    load();
+  </script>
+</body>
+</html>
