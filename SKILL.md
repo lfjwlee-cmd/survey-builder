@@ -13,9 +13,32 @@ description: >
   설문 받고 싶어", "응답을 한눈에 정리", even if they only describe the questions
   and don't say the word "survey". Also use it to organize/summarize an existing
   Google Forms spreadsheet of responses.
+  DO NOT use this skill for 인생푸드's 통합 시식 설문 (신메뉴 시식 회차 평가). That
+  system is already live at D:\설문\통합시식설문 (Supabase + GitHub Pages) and
+  new rounds are created inside its 관리 tab — never by scaffolding a new survey here.
 ---
 
 # Survey Builder
+
+> ## 먼저 확인: 인생푸드 시식 설문이면 이 스킬을 쓰지 말 것
+>
+> 인생푸드의 **신메뉴 시식 평가**는 이미 운영 중인 별도 시스템이 있다.
+>
+> | 항목 | 위치 |
+> |---|---|
+> | 소스 | `D:\설문\통합시식설문` |
+> | 저장소 | `lfjwlee-cmd/foodcost-survey` (GitHub Pages) |
+> | DB | Supabase (`svy_surveys` / `svy_responses` / `svy_brands`) |
+> | 전체 기록 | `D:\설문\설문시스템-전체기록.md` (로컬 전용) |
+> | 새 회차 만들기 | 사이트 `#admin` → 관리 탭 → **+ 새 시식 만들기** (코드 작업 불필요) |
+>
+> **이유:** 그 시스템의 목적은 회차를 한 DB에 계속 쌓아 세그먼트(성별·연령)별 선호를
+> 누적 분석하는 것이다. 이 스킬로 새 설문을 만들면 응답이 엑셀·구글시트로 새어나가
+> 비교군이 끊기고 누적 분석이 깨진다.
+>
+> **이 스킬(엑셀 + Google Apps Script 방식)은 2026-07-09 이후 동결됐다.** 인생푸드
+> 시식과 무관한 일회성 설문에만 쓴다.
+
 
 This skill scaffolds a full survey system into a new project folder and customizes it
 to the survey the user describes. The user just says what they want to ask; you produce
